@@ -1,10 +1,10 @@
-/* HomeOnMap Global Styles - No Tailwind */
+/* HomeOnMap Global Styles (No Tailwind, Vercel Safe) */
 
 html, body {
   margin: 0;
   padding: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background-color: #f8fafc;
+  background: #f8fafc;
   height: 100%;
 }
 
@@ -12,13 +12,6 @@ html, body {
   box-sizing: border-box;
 }
 
-/* Make app full height */
 body, #__next {
   height: 100%;
-}
-
-/* Optional smooth font rendering */
-body {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
