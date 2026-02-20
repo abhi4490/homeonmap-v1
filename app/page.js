@@ -38,8 +38,15 @@ export default function Home() {
     <div>
       {/* Header */}
       <header style={header}>
-        <div style={brand}>🏠 HomeOnMap</div>
-        <div style={tagline}>Find properties directly on the map</div>
+        <div>
+          <div style={brand}>🏠 HomeOnMap</div>
+          <div style={tagline}>Find properties directly on the map</div>
+        </div>
+
+        <div style={{ display: "flex", gap: 10 }}>
+          <a href="/my-listings" style={linkBtn}>My Listings</a>
+          <a href="/add" style={addBtn}>Add Property</a>
+        </div>
       </header>
 
       {/* Map */}
@@ -69,29 +76,18 @@ export default function Home() {
               }}
               onCloseClick={() => setSelected(null)}
             >
-              <div style={card}>
-                {/* Image */}
+              <div style={{ width: 240 }}>
                 {selected.image_url && (
-                  <img src={selected.image_url} style={img} />
+                  <img src={selected.image_url} style={{ width: "100%", borderRadius: 8 }} />
                 )}
+                <div style={{ fontWeight: 600 }}>{selected.title}</div>
+                <div style={{ color: "#16a34a", fontWeight: 700 }}>
+                  ₹ {selected.price}
+                </div>
 
-                {/* Title */}
-                <div style={title}>{selected.title}</div>
-
-                {/* Price */}
-                <div style={price}>₹ {selected.price}</div>
-
-                {/* Contact Buttons */}
-                <div style={{ display: "flex", gap: 8 }}>
-                  <a href={`tel:${selected.phone}`} style={callBtn}>
-                    📞 Call
-                  </a>
-
-                  <a
-                    href={`https://wa.me/${selected.phone}`}
-                    target="_blank"
-                    style={waBtn}
-                  >
+                <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+                  <a href={`tel:${selected.phone}`}>📞 Call</a>
+                  <a href={`https://wa.me/${selected.phone}`} target="_blank">
                     💬 WhatsApp
                   </a>
                 </div>
@@ -100,80 +96,37 @@ export default function Home() {
           )}
         </GoogleMap>
       </div>
-
-      {/* Floating Add Button */}
-      <a href="/add" style={fab}>
-        ＋ Add Property
-      </a>
     </div>
   );
 }
 
-/* ---------- STYLES ---------- */
+/* styles */
 
 const header = {
   height: 70,
   padding: "12px 20px",
   background: "#fff",
   borderBottom: "1px solid #eee",
-  position: "sticky",
-  top: 0,
-  zIndex: 1000,
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
 };
 
 const brand = { fontSize: 18, fontWeight: 700 };
 const tagline = { fontSize: 12, color: "#666" };
 
-const card = { width: 260, fontFamily: "system-ui" };
-
-const img = {
-  width: "100%",
-  height: 150,
-  objectFit: "cover",
-  borderRadius: 10,
-  marginBottom: 8,
-};
-
-const title = { fontWeight: 600, fontSize: 16 };
-
-const price = {
-  fontSize: 18,
-  fontWeight: 700,
-  color: "#16a34a",
-  margin: "4px 0 8px",
-};
-
-const fab = {
-  position: "fixed",
-  bottom: 20,
-  right: 20,
-  background: "#16a34a",
-  color: "#fff",
-  borderRadius: 30,
-  padding: "12px 16px",
-  textDecoration: "none",
-  fontWeight: 600,
-  boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
-};
-
-const callBtn = {
-  flex: 1,
-  textAlign: "center",
-  padding: "6px 0",
-  background: "#16a34a",
-  color: "#fff",
+const linkBtn = {
+  padding: "6px 10px",
+  background: "#f1f5f9",
   borderRadius: 6,
-  fontSize: 14,
   textDecoration: "none",
+  color: "#111",
 };
 
-const waBtn = {
-  flex: 1,
-  textAlign: "center",
-  padding: "6px 0",
-  background: "#25D366",
-  color: "#fff",
+const addBtn = {
+  padding: "6px 10px",
+  background: "#16a34a",
   borderRadius: 6,
-  fontSize: 14,
   textDecoration: "none",
+  color: "#fff",
 };
