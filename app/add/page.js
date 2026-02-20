@@ -7,30 +7,32 @@ export default function AddProperty() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔥 Proper session restore
   useEffect(() => {
-    getUser();
-
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
-
-    return () => listener.subscription.unsubscribe();
+    restoreSession();
   }, []);
 
-  async function getUser() {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+  // 🔥 Robust session restore
+  async function restoreSession() {
+    let attempts = 0;
 
-    setUser(session?.user ?? null);
+    while (attempts < 5) {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session?.user) {
+        setUser(session.user);
+        setLoading(false);
+        return;
+      }
+
+      await new Promise((r) => setTimeout(r, 400));
+      attempts++;
+    }
+
     setLoading(false);
   }
 
-  // Google login
   async function loginWithGoogle() {
     localStorage.setItem("returnToAdd", "true");
 
@@ -45,16 +47,16 @@ export default function AddProperty() {
   if (loading) {
     return (
       <div style={{ textAlign: "center", marginTop: 120 }}>
-        Checking login...
+        Restoring session...
       </div>
     );
   }
 
-  // 🚫 Not logged in
   if (!user) {
     return (
       <div style={{ textAlign: "center", marginTop: 120 }}>
         <h2>Login Required</h2>
+
         <button
           onClick={loginWithGoogle}
           style={{
@@ -73,7 +75,6 @@ export default function AddProperty() {
     );
   }
 
-  // ✅ Logged in state
   return (
     <div style={{ padding: 20 }}>
       <h2>Add Property</h2>
@@ -82,9 +83,9 @@ export default function AddProperty() {
         Logged in as <b>{user.email}</b>
       </p>
 
-      <hr />
-
-      <p>✅ Login working. Next: property form.</p>
+      <p style={{ marginTop: 20 }}>
+        ✅ Google login finally stable.
+      </p>
     </div>
   );
 }
