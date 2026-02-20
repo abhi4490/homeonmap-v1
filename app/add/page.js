@@ -5,27 +5,36 @@ import { supabase } from "../../lib/supabase";
 
 export default function AddProperty() {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
+  // 🔁 Restore session after OAuth redirect
   useEffect(() => {
     checkUser();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+      checkUser();
+    });
+
+    return () => listener.subscription.unsubscribe();
   }, []);
 
   async function checkUser() {
     const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    setUser(user);
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    setUser(session?.user ?? null);
+    setLoading(false);
   }
 
+  // 🚀 Google login (with correct redirect)
   async function loginWithGoogle() {
-    async function loginWithGoogle() {
-  await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: window.location.origin + "/add",
-    },
-  });
-}
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin + "/add",
+      },
+    });
   }
 
   async function logout() {
@@ -33,10 +42,19 @@ export default function AddProperty() {
     location.reload();
   }
 
+  // ⏳ Loading state (important after redirect)
+  if (loading) {
+    return (
+      <div style={{ textAlign: "center", marginTop: 120 }}>
+        Checking login...
+      </div>
+    );
+  }
+
   // 🚫 NOT LOGGED IN VIEW
   if (!user) {
     return (
-      <div style={{ textAlign: "center", marginTop: 100 }}>
+      <div style={{ textAlign: "center", marginTop: 120 }}>
         <h2>Login Required</h2>
         <p>You must login to add property</p>
 
@@ -61,7 +79,7 @@ export default function AddProperty() {
   // ✅ LOGGED IN VIEW
   return (
     <div style={{ padding: 20 }}>
-      <h2>Add Property (Logged in)</h2>
+      <h2>Add Property</h2>
 
       <p>
         Logged in as: <b>{user.email}</b>
@@ -71,7 +89,10 @@ export default function AddProperty() {
 
       <hr />
 
-      <p>Form will go here (next step)</p>
+      <p style={{ marginTop: 20 }}>
+        ✅ Google login working.  
+        Next step: attach property form.
+      </p>
     </div>
   );
 }
