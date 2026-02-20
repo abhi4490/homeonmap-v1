@@ -15,68 +15,66 @@ export default function AddProperty() {
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [verified, setVerified] = useState(false);
   const [role, setRole] = useState("owner");
   const [image, setImage] = useState(null);
   const [marker, setMarker] = useState(center);
-  const [loading, setLoading] = useState(false);
 
   if (!isLoaded) return <div>Loading map...</div>;
 
+  // 📧 SEND MAGIC LINK
+  async function sendVerification() {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: window.location.origin + "/add",
+      },
+    });
+
+    if (!error) alert("Verification link sent to email 📧");
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
-    setLoading(true);
 
-    try {
-      // 🧠 STEP 1 — COUNT EXISTING LISTINGS
-      const { data: existing } = await supabase
-        .from("properties")
-        .select("id")
-        .eq("phone", phone);
-
-      if (existing && existing.length >= 5) {
-        alert("Free listing limit reached (5). Upgrade coming soon 🚀");
-        setLoading(false);
-        return;
-      }
-
-      // 🖼️ STEP 2 — IMAGE UPLOAD
-      let imageUrl = null;
-
-      if (image) {
-        const fileName =
-          Date.now() + "_" + image.name.replace(/\s+/g, "_");
-
-        await supabase.storage
-          .from("property-images")
-          .upload(fileName, image);
-
-        imageUrl = `https://djxkfbavvjmoowqspwbg.supabase.co/storage/v1/object/public/property-images/${fileName}`;
-      }
-
-      // 📍 STEP 3 — INSERT PROPERTY
-      await supabase.from("properties").insert([
-        {
-          title,
-          price,
-          phone,
-          role,
-          lat: marker.lat,
-          lng: marker.lng,
-          image_url: imageUrl,
-        },
-      ]);
-
-      alert("Property added successfully!");
-      setTitle("");
-      setPrice("");
-      setPhone("");
-      setImage(null);
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong");
+    if (!verified) {
+      alert("Please verify email first (check your inbox)");
+      return;
     }
 
-    setLoading(false);
+    // Listing limit check
+    const { data: existing } = await supabase
+      .from("properties")
+      .select("id")
+      .eq("phone", phone);
+
+    if (existing && existing.length >= 5) {
+      alert("Free listing limit reached (5)");
+      return;
+    }
+
+    let imageUrl = null;
+
+    if (image) {
+      const name = Date.now() + "_" + image.name.replace(/\s+/g, "_");
+      await supabase.storage.from("property-images").upload(name, image);
+      imageUrl = `https://djxkfbavvjmoowqspwbg.supabase.co/storage/v1/object/public/property-images/${name}`;
+    }
+
+    await supabase.from("properties").insert([
+      {
+        title,
+        price,
+        phone,
+        role,
+        lat: marker.lat,
+        lng: marker.lng,
+        image_url: imageUrl,
+      },
+    ]);
+
+    alert("Property added!");
   }
 
   return (
@@ -84,59 +82,46 @@ export default function AddProperty() {
       <h2>Add Property</h2>
 
       <form onSubmit={handleSubmit} style={{ maxWidth: 420 }}>
+        <input placeholder="Title" onChange={(e) => setTitle(e.target.value)} required /><br /><br />
+        <input placeholder="Price" onChange={(e) => setPrice(e.target.value)} required /><br /><br />
+
+        <input placeholder="Phone (visible to buyers)" onChange={(e) => setPhone(e.target.value)} required /><br /><br />
+
+        {/* EMAIL VERIFICATION */}
         <input
-          placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Email for verification"
+          onChange={(e) => setEmail(e.target.value)}
           required
         />
+        <button type="button" onClick={sendVerification}>
+          Send Verification Link
+        </button>
         <br /><br />
 
-        <input
-          placeholder="Price"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          required
-        />
+        <label>
+          <input type="checkbox" onChange={() => setVerified(true)} />
+          I have verified my email
+        </label>
         <br /><br />
 
-        <input
-          placeholder="Phone"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          required
-        />
-        <br /><br />
-
-        {/* ROLE SELECT */}
         <select value={role} onChange={(e) => setRole(e.target.value)}>
           <option value="owner">Owner</option>
           <option value="broker">Broker</option>
         </select>
         <br /><br />
 
-        <input
-          type="file"
-          onChange={(e) => setImage(e.target.files[0])}
-        />
+        <input type="file" onChange={(e) => setImage(e.target.files[0])} />
         <br /><br />
 
-        <button disabled={loading}>
-          {loading ? "Adding..." : "Add Property"}
-        </button>
+        <button>Add Property</button>
       </form>
-
-      <h3>Click map to set location</h3>
 
       <GoogleMap
         mapContainerStyle={{ width: "100%", height: 300 }}
         center={marker}
         zoom={12}
         onClick={(e) =>
-          setMarker({
-            lat: e.latLng.lat(),
-            lng: e.latLng.lng(),
-          })
+          setMarker({ lat: e.latLng.lat(), lng: e.latLng.lng() })
         }
       >
         <Marker position={marker} />
