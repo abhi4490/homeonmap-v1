@@ -8,69 +8,28 @@ export default function AddProperty() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    restoreSession();
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      setLoading(false);
+    });
   }, []);
 
-  // 🔥 Robust session restore
-  async function restoreSession() {
-    let attempts = 0;
-
-    while (attempts < 5) {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (session?.user) {
-        setUser(session.user);
-        setLoading(false);
-        return;
-      }
-
-      await new Promise((r) => setTimeout(r, 400));
-      attempts++;
-    }
-
-    setLoading(false);
-  }
-
   async function loginWithGoogle() {
-    localStorage.setItem("returnToAdd", "true");
-
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.origin,
+        redirectTo: window.location.origin + "/add",
       },
     });
   }
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: "center", marginTop: 120 }}>
-        Restoring session...
-      </div>
-    );
-  }
+  if (loading) return <div style={{ textAlign: "center", marginTop: 100 }}>Loading...</div>;
 
   if (!user) {
     return (
-      <div style={{ textAlign: "center", marginTop: 120 }}>
+      <div style={{ textAlign: "center", marginTop: 100 }}>
         <h2>Login Required</h2>
-
-        <button
-          onClick={loginWithGoogle}
-          style={{
-            padding: "12px 20px",
-            background: "#4285F4",
-            color: "#fff",
-            border: "none",
-            borderRadius: 8,
-            fontSize: 16,
-            cursor: "pointer",
-          }}
-        >
-          Continue with Google
-        </button>
+        <button onClick={loginWithGoogle}>Continue with Google</button>
       </div>
     );
   }
@@ -78,14 +37,8 @@ export default function AddProperty() {
   return (
     <div style={{ padding: 20 }}>
       <h2>Add Property</h2>
-
-      <p>
-        Logged in as <b>{user.email}</b>
-      </p>
-
-      <p style={{ marginTop: 20 }}>
-        ✅ Google login finally stable.
-      </p>
+      <p>Logged in as {user.email}</p>
+      <p>✅ Auth is now fixed permanently.</p>
     </div>
   );
 }
