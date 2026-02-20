@@ -7,7 +7,7 @@ export default function AddProperty() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔁 Restore session after OAuth redirect
+  // Restore session after redirect
   useEffect(() => {
     checkUser();
 
@@ -27,31 +27,22 @@ export default function AddProperty() {
     setLoading(false);
   }
 
-  // 🚀 Google login (with correct redirect)
+  // 🚀 Google login with intent saving
   async function loginWithGoogle() {
+    localStorage.setItem("returnToAdd", "true");
+
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.origin + "/add",
+        redirectTo: window.location.origin,
       },
     });
   }
 
-  async function logout() {
-    await supabase.auth.signOut();
-    location.reload();
-  }
-
-  // ⏳ Loading state (important after redirect)
   if (loading) {
-    return (
-      <div style={{ textAlign: "center", marginTop: 120 }}>
-        Checking login...
-      </div>
-    );
+    return <div style={{ textAlign: "center", marginTop: 120 }}>Checking login...</div>;
   }
 
-  // 🚫 NOT LOGGED IN VIEW
   if (!user) {
     return (
       <div style={{ textAlign: "center", marginTop: 120 }}>
@@ -76,23 +67,11 @@ export default function AddProperty() {
     );
   }
 
-  // ✅ LOGGED IN VIEW
   return (
     <div style={{ padding: 20 }}>
       <h2>Add Property</h2>
-
-      <p>
-        Logged in as: <b>{user.email}</b>
-      </p>
-
-      <button onClick={logout}>Logout</button>
-
-      <hr />
-
-      <p style={{ marginTop: 20 }}>
-        ✅ Google login working.  
-        Next step: attach property form.
-      </p>
+      <p>Logged in as <b>{user.email}</b></p>
+      <p>✅ Login stable. Form will be added next.</p>
     </div>
   );
 }
