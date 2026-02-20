@@ -10,15 +10,8 @@ import {
   useJsApiLoader,
 } from "@react-google-maps/api";
 
-const containerStyle = {
-  width: "100%",
-  height: "100vh",
-};
-
-const center = {
-  lat: 30.7333,
-  lng: 76.7794,
-};
+const containerStyle = { width: "100%", height: "100vh" };
+const center = { lat: 30.7333, lng: 76.7794 };
 
 export default function Home() {
   const { isLoaded } = useJsApiLoader({
@@ -61,31 +54,54 @@ export default function Home() {
           }}
           onCloseClick={() => setSelected(null)}
         >
-          <div style={{ width: 200 }}>
-            {/* Image */}
-            {selected.image_url && (
+          <div
+            style={{
+              width: 220,
+              display: "flex",
+              flexDirection: "column",
+              gap: 6,
+            }}
+          >
+            {/* FORCE IMAGE RENDER */}
+            {selected.image_url ? (
               <img
                 src={selected.image_url}
                 alt="property"
                 style={{
                   width: "100%",
-                  height: 120,
+                  height: 130,
                   objectFit: "cover",
                   borderRadius: 8,
-                  marginBottom: 8,
+                  background: "#eee",
+                }}
+                onError={(e) => {
+                  e.target.style.border = "2px solid red";
+                  console.log("Image failed:", selected.image_url);
+                }}
+                onLoad={() => {
+                  console.log("Image loaded:", selected.image_url);
                 }}
               />
+            ) : (
+              <div style={{ fontSize: 12, color: "gray" }}>
+                No image URL
+              </div>
             )}
 
-            {/* Title */}
+            {/* DEBUG URL (temporary) */}
+            <div
+              style={{
+                fontSize: 10,
+                wordBreak: "break-all",
+                color: "#888",
+              }}
+            >
+              {selected.image_url}
+            </div>
+
             <strong>{selected.title}</strong>
-            <br />
-
-            {/* Price */}
             <span>₹ {selected.price}</span>
-            <br />
 
-            {/* Call */}
             <a
               href={`tel:${selected.phone}`}
               style={{ color: "green", fontWeight: "bold" }}
