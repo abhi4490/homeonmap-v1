@@ -5,15 +5,8 @@ import { useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 
-const containerStyle = {
-  width: "100%",
-  height: "400px",
-};
-
-const defaultCenter = {
-  lat: 30.7333,
-  lng: 76.7794,
-};
+const containerStyle = { width: "100%", height: "400px" };
+const defaultCenter = { lat: 30.7333, lng: 76.7794 };
 
 export default function AddProperty() {
   const { isLoaded } = useJsApiLoader({
@@ -35,25 +28,36 @@ export default function AddProperty() {
 
     let imageUrl = null;
 
+    // -------- SAFE IMAGE UPLOAD --------
     if (image) {
-      const fileName = Date.now() + "_" + image.name;
-      const { data, error } = await supabase.storage
-        .from("PROPERTY-IMAGES")
-        .upload(fileName, image);
+      try {
+        const cleanName =
+          Date.now() + "_" + image.name.replace(/\s+/g, "_");
 
-      if (!error) {
-        const { data: publicUrl } = supabase.storage
-          .from("property-images")
-          .getPublicUrl(fileName);
-        imageUrl = publicUrl.publicUrl;
+        const { error: uploadError } = await supabase.storage
+          .from("PROPERTY-IMAGES")
+          .upload(cleanName, image);
+
+        if (!uploadError) {
+          const { data } = supabase.storage
+            .from("PROPERTY-IMAGES")
+            .getPublicUrl(cleanName);
+
+          imageUrl = data.publicUrl;
+        } else {
+          console.error("Upload error:", uploadError);
+        }
+      } catch (err) {
+        console.log("Image upload failed, continuing");
       }
     }
 
-    const { error } = await supabase.from("properties").insert([
+    // -------- SAFE INSERT --------
+    const { data, error } = await supabase.from("properties").insert([
       {
-        title,
-        price,
-        phone,
+        title: title,
+        price: price,
+        phone: phone,
         lat: marker.lat,
         lng: marker.lng,
         image_url: imageUrl,
@@ -62,13 +66,15 @@ export default function AddProperty() {
 
     setLoading(false);
 
-    if (!error) {
+    if (error) {
+      console.error("Insert error:", error);
+      alert("Insert failed: " + error.message);
+    } else {
       alert("Property added!");
       setTitle("");
       setPrice("");
       setPhone("");
-    } else {
-      alert("Error adding property");
+      setImage(null);
     }
   }
 
@@ -77,28 +83,13 @@ export default function AddProperty() {
       <h2>Add Property</h2>
 
       <form onSubmit={handleSubmit} style={{ maxWidth: 500 }}>
-        <input
-          placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-        />
+        <input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
         <br /><br />
 
-        <input
-          placeholder="Price"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          required
-        />
+        <input placeholder="Price" value={price} onChange={(e) => setPrice(e.target.value)} required />
         <br /><br />
 
-        <input
-          placeholder="Phone"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          required
-        />
+        <input placeholder="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} required />
         <br /><br />
 
         <input type="file" onChange={(e) => setImage(e.target.files[0])} />
@@ -116,10 +107,7 @@ export default function AddProperty() {
         center={marker}
         zoom={12}
         onClick={(e) =>
-          setMarker({
-            lat: e.latLng.lat(),
-            lng: e.latLng.lng(),
-          })
+          setMarker({ lat: e.latLng.lat(), lng: e.latLng.lng() })
         }
       >
         <Marker position={marker} />
