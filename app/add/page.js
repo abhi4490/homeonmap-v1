@@ -16,6 +16,7 @@ export default function AddProperty() {
   const [price, setPrice] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
   const [verified, setVerified] = useState(false);
   const [role, setRole] = useState("owner");
   const [image, setImage] = useState(null);
@@ -23,27 +24,43 @@ export default function AddProperty() {
 
   if (!isLoaded) return <div>Loading map...</div>;
 
-  // 📧 SEND MAGIC LINK
-  async function sendVerification() {
+  // 📧 SEND EMAIL OTP
+  async function sendOtp() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: window.location.origin + "/add",
+        shouldCreateUser: true,
       },
     });
 
-    if (!error) alert("Verification link sent to email 📧");
+    if (!error) alert("OTP sent to your email 📧");
+  }
+
+  // 🔐 VERIFY EMAIL OTP
+  async function verifyOtp() {
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token: otp,
+      type: "email",
+    });
+
+    if (!error) {
+      setVerified(true);
+      alert("Email verified ✅");
+    } else {
+      alert("Invalid OTP");
+    }
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
 
     if (!verified) {
-      alert("Please verify email first (check your inbox)");
+      alert("Please verify email first");
       return;
     }
 
-    // Listing limit check
+    // Listing limit (5 free)
     const { data: existing } = await supabase
       .from("properties")
       .select("id")
@@ -58,7 +75,9 @@ export default function AddProperty() {
 
     if (image) {
       const name = Date.now() + "_" + image.name.replace(/\s+/g, "_");
+
       await supabase.storage.from("property-images").upload(name, image);
+
       imageUrl = `https://djxkfbavvjmoowqspwbg.supabase.co/storage/v1/object/public/property-images/${name}`;
     }
 
@@ -74,7 +93,7 @@ export default function AddProperty() {
       },
     ]);
 
-    alert("Property added!");
+    alert("Property added successfully 🎉");
   }
 
   return (
@@ -84,24 +103,26 @@ export default function AddProperty() {
       <form onSubmit={handleSubmit} style={{ maxWidth: 420 }}>
         <input placeholder="Title" onChange={(e) => setTitle(e.target.value)} required /><br /><br />
         <input placeholder="Price" onChange={(e) => setPrice(e.target.value)} required /><br /><br />
-
         <input placeholder="Phone (visible to buyers)" onChange={(e) => setPhone(e.target.value)} required /><br /><br />
 
-        {/* EMAIL VERIFICATION */}
+        {/* EMAIL OTP */}
         <input
           placeholder="Email for verification"
+          value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <button type="button" onClick={sendVerification}>
-          Send Verification Link
-        </button>
+        <button type="button" onClick={sendOtp}>Send OTP</button>
         <br /><br />
 
-        <label>
-          <input type="checkbox" onChange={() => setVerified(true)} />
-          I have verified my email
-        </label>
+        <input
+          placeholder="Enter Email OTP"
+          value={otp}
+          onChange={(e) => setOtp(e.target.value)}
+        />
+        <button type="button" onClick={verifyOtp}>Verify OTP</button>
+
+        {verified && <div style={{ color: "green" }}>Verified ✅</div>}
         <br /><br />
 
         <select value={role} onChange={(e) => setRole(e.target.value)}>
@@ -116,12 +137,17 @@ export default function AddProperty() {
         <button>Add Property</button>
       </form>
 
+      <h3>Click map to set location</h3>
+
       <GoogleMap
         mapContainerStyle={{ width: "100%", height: 300 }}
         center={marker}
         zoom={12}
         onClick={(e) =>
-          setMarker({ lat: e.latLng.lat(), lng: e.latLng.lng() })
+          setMarker({
+            lat: e.latLng.lat(),
+            lng: e.latLng.lng(),
+          })
         }
       >
         <Marker position={marker} />
