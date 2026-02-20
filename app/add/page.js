@@ -38,7 +38,7 @@ export default function AddProperty() {
     if (image) {
       const fileName = Date.now() + "_" + image.name;
       const { data, error } = await supabase.storage
-        .from("property-images")
+        .from("PROPERTY-IMAGES")
         .upload(fileName, image);
 
       if (!error) {
