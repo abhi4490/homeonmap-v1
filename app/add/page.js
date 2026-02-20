@@ -1,159 +1,163 @@
 "use client";
-export const dynamic = "force-dynamic";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
-import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
+import { signInWithGoogle, getCurrentUser } from "../../lib/auth";
+import {
+  GoogleMap,
+  Marker,
+  useJsApiLoader,
+} from "@react-google-maps/api";
 
-const center = { lat: 30.7333, lng: 76.7794 };
+const containerStyle = {
+  width: "100%",
+  height: "400px",
+};
+
+const center = {
+  lat: 30.7333,
+  lng: 76.7794,
+};
 
 export default function AddProperty() {
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
-  });
-
+  const [user, setUser] = useState(null);
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [otpInput, setOtpInput] = useState("");
-  const [generatedOtp, setGeneratedOtp] = useState("");
-  const [verified, setVerified] = useState(false);
-  const [role, setRole] = useState("owner");
   const [image, setImage] = useState(null);
-  const [marker, setMarker] = useState(center);
+  const [selectedLocation, setSelectedLocation] = useState(null);
 
-  if (!isLoaded) return <div>Loading map...</div>;
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY,
+  });
 
-  // 🔢 GENERATE OTP
-  function generateOtp() {
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    return otp;
-  }
+  useEffect(() => {
+    getCurrentUser().then(setUser);
+  }, []);
 
-  // 📧 SEND OTP (DEV MODE)
-  async function sendOtp() {
-    const otp = generateOtp();
-    setGeneratedOtp(otp);
+  const handleMapClick = (e) => {
+    setSelectedLocation({
+      lat: e.latLng.lat(),
+      lng: e.latLng.lng(),
+    });
+  };
 
-    await supabase.from("email_otps").insert([
-      {
-        email,
-        otp,
-      },
-    ]);
-
-    alert(`OTP (dev mode): ${otp}`);
-  }
-
-  // 🔐 VERIFY OTP
-  async function verifyOtp() {
-    if (otpInput === generatedOtp) {
-      setVerified(true);
-      alert("Email verified ✅");
-    } else {
-      alert("Invalid OTP");
-    }
-  }
-
-  async function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!verified) {
-      alert("Please verify email first");
+    if (!selectedLocation) {
+      alert("Select location on map");
       return;
     }
 
-    // Listing limit
-    const { data: existing } = await supabase
-      .from("properties")
-      .select("id")
-      .eq("phone", phone);
-
-    if (existing && existing.length >= 5) {
-      alert("Free listing limit reached (5)");
-      return;
-    }
-
-    let imageUrl = null;
+    let imageUrl = "";
 
     if (image) {
-      const name = Date.now() + "_" + image.name.replace(/\s+/g, "_");
-      await supabase.storage.from("property-images").upload(name, image);
-      imageUrl = `https://djxkfbavvjmoowqspwbg.supabase.co/storage/v1/object/public/property-images/${name}`;
+      const fileName = `${Date.now()}_${image.name}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("property-images")
+        .upload(fileName, image);
+
+      if (uploadError) {
+        alert(uploadError.message);
+        return;
+      }
+
+      imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/property-images/${fileName}`;
     }
 
-    await supabase.from("properties").insert([
+    const { error } = await supabase.from("properties").insert([
       {
         title,
         price,
         phone,
-        role,
-        lat: marker.lat,
-        lng: marker.lng,
+        lat: selectedLocation.lat,
+        lng: selectedLocation.lng,
         image_url: imageUrl,
+        user_id: user.id,
       },
     ]);
 
-    alert("Property added 🎉");
+    if (error) {
+      alert(error.message);
+    } else {
+      alert("Property added!");
+      window.location.href = "/";
+    }
+  };
+
+  // 🛑 If NOT logged in
+  if (!user) {
+    return (
+      <div style={{ textAlign: "center", marginTop: 80 }}>
+        <h2>Login to Add Property</h2>
+        <button
+          onClick={signInWithGoogle}
+          style={{
+            padding: "12px 20px",
+            background: "#000",
+            color: "#fff",
+            border: "none",
+            borderRadius: 8,
+            cursor: "pointer",
+          }}
+        >
+          Continue with Google
+        </button>
+      </div>
+    );
   }
 
+  // ✅ Logged in view
   return (
     <div style={{ padding: 20 }}>
       <h2>Add Property</h2>
 
-      <form onSubmit={handleSubmit} style={{ maxWidth: 420 }}>
-        <input placeholder="Title" onChange={(e) => setTitle(e.target.value)} required /><br /><br />
-        <input placeholder="Price" onChange={(e) => setPrice(e.target.value)} required /><br /><br />
-        <input placeholder="Phone (visible to buyers)" onChange={(e) => setPhone(e.target.value)} required /><br /><br />
-
-        {/* EMAIL OTP */}
+      <form onSubmit={handleSubmit}>
         <input
-          placeholder="Email for verification"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
           required
         />
-        <button type="button" onClick={sendOtp}>Send OTP</button>
-        <br /><br />
-
+        <br />
         <input
-          placeholder="Enter OTP"
-          value={otpInput}
-          onChange={(e) => setOtpInput(e.target.value)}
+          placeholder="Price"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+          required
         />
-        <button type="button" onClick={verifyOtp}>Verify OTP</button>
+        <br />
+        <input
+          placeholder="Phone"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          required
+        />
+        <br />
+        <input
+          type="file"
+          onChange={(e) => setImage(e.target.files[0])}
+        />
+        <br />
 
-        {verified && <div style={{ color: "green" }}>Verified ✅</div>}
-        <br /><br />
+        {isLoaded && (
+          <GoogleMap
+            mapContainerStyle={containerStyle}
+            center={center}
+            zoom={10}
+            onClick={handleMapClick}
+          >
+            {selectedLocation && (
+              <Marker position={selectedLocation} />
+            )}
+          </GoogleMap>
+        )}
 
-        <select value={role} onChange={(e) => setRole(e.target.value)}>
-          <option value="owner">Owner</option>
-          <option value="broker">Broker</option>
-        </select>
-        <br /><br />
-
-        <input type="file" onChange={(e) => setImage(e.target.files[0])} />
-        <br /><br />
-
-        <button>Add Property</button>
+        <br />
+        <button type="submit">Add Property</button>
       </form>
-
-      <h3>Click map to set location</h3>
-
-      <GoogleMap
-        mapContainerStyle={{ width: "100%", height: 300 }}
-        center={marker}
-        zoom={12}
-        onClick={(e) =>
-          setMarker({
-            lat: e.latLng.lat(),
-            lng: e.latLng.lng(),
-          })
-        }
-      >
-        <Marker position={marker} />
-      </GoogleMap>
     </div>
   );
 }
