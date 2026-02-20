@@ -18,61 +18,125 @@ export default function AddProperty() {
   const [role, setRole] = useState("owner");
   const [image, setImage] = useState(null);
   const [marker, setMarker] = useState(center);
+  const [loading, setLoading] = useState(false);
 
   if (!isLoaded) return <div>Loading map...</div>;
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setLoading(true);
 
-    let imageUrl = null;
+    try {
+      // 🧠 STEP 1 — COUNT EXISTING LISTINGS
+      const { data: existing } = await supabase
+        .from("properties")
+        .select("id")
+        .eq("phone", phone);
 
-    if (image) {
-      const name = Date.now() + "_" + image.name.replace(/\s+/g, "_");
-      await supabase.storage.from("property-images").upload(name, image);
-      imageUrl = `https://djxkfbavvjmoowqspwbg.supabase.co/storage/v1/object/public/property-images/${name}`;
+      if (existing && existing.length >= 5) {
+        alert("Free listing limit reached (5). Upgrade coming soon 🚀");
+        setLoading(false);
+        return;
+      }
+
+      // 🖼️ STEP 2 — IMAGE UPLOAD
+      let imageUrl = null;
+
+      if (image) {
+        const fileName =
+          Date.now() + "_" + image.name.replace(/\s+/g, "_");
+
+        await supabase.storage
+          .from("property-images")
+          .upload(fileName, image);
+
+        imageUrl = `https://djxkfbavvjmoowqspwbg.supabase.co/storage/v1/object/public/property-images/${fileName}`;
+      }
+
+      // 📍 STEP 3 — INSERT PROPERTY
+      await supabase.from("properties").insert([
+        {
+          title,
+          price,
+          phone,
+          role,
+          lat: marker.lat,
+          lng: marker.lng,
+          image_url: imageUrl,
+        },
+      ]);
+
+      alert("Property added successfully!");
+      setTitle("");
+      setPrice("");
+      setPhone("");
+      setImage(null);
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong");
     }
 
-    await supabase.from("properties").insert([
-      {
-        title,
-        price,
-        phone,
-        role,
-        lat: marker.lat,
-        lng: marker.lng,
-        image_url: imageUrl,
-      },
-    ]);
-
-    alert("Property added!");
+    setLoading(false);
   }
 
   return (
     <div style={{ padding: 20 }}>
       <h2>Add Property</h2>
 
-      <form onSubmit={handleSubmit} style={{ maxWidth: 400 }}>
-        <input placeholder="Title" onChange={(e) => setTitle(e.target.value)} required /><br /><br />
-        <input placeholder="Price" onChange={(e) => setPrice(e.target.value)} required /><br /><br />
-        <input placeholder="Phone" onChange={(e) => setPhone(e.target.value)} required /><br /><br />
+      <form onSubmit={handleSubmit} style={{ maxWidth: 420 }}>
+        <input
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
+        <br /><br />
 
-        {/* ROLE */}
+        <input
+          placeholder="Price"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+          required
+        />
+        <br /><br />
+
+        <input
+          placeholder="Phone"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          required
+        />
+        <br /><br />
+
+        {/* ROLE SELECT */}
         <select value={role} onChange={(e) => setRole(e.target.value)}>
           <option value="owner">Owner</option>
           <option value="broker">Broker</option>
-        </select><br /><br />
+        </select>
+        <br /><br />
 
-        <input type="file" onChange={(e) => setImage(e.target.files[0])} /><br /><br />
+        <input
+          type="file"
+          onChange={(e) => setImage(e.target.files[0])}
+        />
+        <br /><br />
 
-        <button>Add Property</button>
+        <button disabled={loading}>
+          {loading ? "Adding..." : "Add Property"}
+        </button>
       </form>
+
+      <h3>Click map to set location</h3>
 
       <GoogleMap
         mapContainerStyle={{ width: "100%", height: 300 }}
         center={marker}
         zoom={12}
         onClick={(e) =>
-          setMarker({ lat: e.latLng.lat(), lng: e.latLng.lng() })
+          setMarker({
+            lat: e.latLng.lat(),
+            lng: e.latLng.lng(),
+          })
         }
       >
         <Marker position={marker} />
