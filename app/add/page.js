@@ -28,19 +28,19 @@ export default function AddProperty() {
 
     let imageUrl = null;
 
-    // -------- SAFE IMAGE UPLOAD --------
+    // -------- IMAGE UPLOAD (FIXED BUCKET NAME) --------
     if (image) {
       try {
         const cleanName =
           Date.now() + "_" + image.name.replace(/\s+/g, "_");
 
         const { error: uploadError } = await supabase.storage
-          .from("PROPERTY-IMAGES")
+          .from("property-images") // ✅ correct bucket name
           .upload(cleanName, image);
 
         if (!uploadError) {
           const { data } = supabase.storage
-            .from("PROPERTY-IMAGES")
+            .from("property-images")
             .getPublicUrl(cleanName);
 
           imageUrl = data.publicUrl;
@@ -48,11 +48,11 @@ export default function AddProperty() {
           console.error("Upload error:", uploadError);
         }
       } catch (err) {
-        console.log("Image upload failed, continuing");
+        console.log("Image upload failed, continuing without image");
       }
     }
 
-    // -------- SAFE INSERT --------
+    // -------- INSERT PROPERTY --------
     const { data, error } = await supabase.from("properties").insert([
       {
         title: title,
@@ -70,7 +70,7 @@ export default function AddProperty() {
       console.error("Insert error:", error);
       alert("Insert failed: " + error.message);
     } else {
-      alert("Property added!");
+      alert("Property added successfully!");
       setTitle("");
       setPrice("");
       setPhone("");
@@ -83,16 +83,34 @@ export default function AddProperty() {
       <h2>Add Property</h2>
 
       <form onSubmit={handleSubmit} style={{ maxWidth: 500 }}>
-        <input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+        <input
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
         <br /><br />
 
-        <input placeholder="Price" value={price} onChange={(e) => setPrice(e.target.value)} required />
+        <input
+          placeholder="Price"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+          required
+        />
         <br /><br />
 
-        <input placeholder="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+        <input
+          placeholder="Phone"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          required
+        />
         <br /><br />
 
-        <input type="file" onChange={(e) => setImage(e.target.files[0])} />
+        <input
+          type="file"
+          onChange={(e) => setImage(e.target.files[0])}
+        />
         <br /><br />
 
         <button disabled={loading}>
@@ -107,7 +125,10 @@ export default function AddProperty() {
         center={marker}
         zoom={12}
         onClick={(e) =>
-          setMarker({ lat: e.latLng.lat(), lng: e.latLng.lng() })
+          setMarker({
+            lat: e.latLng.lat(),
+            lng: e.latLng.lng(),
+          })
         }
       >
         <Marker position={marker} />
