@@ -56,58 +56,83 @@ export default function Home() {
         >
           <div
             style={{
-              width: 220,
-              display: "flex",
-              flexDirection: "column",
-              gap: 6,
+              width: 260,
+              fontFamily: "system-ui, sans-serif",
             }}
           >
-            {/* FORCE IMAGE RENDER */}
-            {selected.image_url ? (
+            {/* IMAGE */}
+            {selected.image_url && (
               <img
                 src={selected.image_url}
                 alt="property"
                 style={{
                   width: "100%",
-                  height: 130,
+                  height: 150,
                   objectFit: "cover",
-                  borderRadius: 8,
-                  background: "#eee",
-                }}
-                onError={(e) => {
-                  e.target.style.border = "2px solid red";
-                  console.log("Image failed:", selected.image_url);
-                }}
-                onLoad={() => {
-                  console.log("Image loaded:", selected.image_url);
+                  borderRadius: 10,
+                  marginBottom: 8,
                 }}
               />
-            ) : (
-              <div style={{ fontSize: 12, color: "gray" }}>
-                No image URL
-              </div>
             )}
 
-            {/* DEBUG URL (temporary) */}
+            {/* TITLE */}
             <div
               style={{
-                fontSize: 10,
-                wordBreak: "break-all",
-                color: "#888",
+                fontWeight: 600,
+                fontSize: 16,
+                marginBottom: 4,
               }}
             >
-              {selected.image_url}
+              {selected.title}
             </div>
 
-            <strong>{selected.title}</strong>
-            <span>₹ {selected.price}</span>
-
-            <a
-              href={`tel:${selected.phone}`}
-              style={{ color: "green", fontWeight: "bold" }}
+            {/* PRICE */}
+            <div
+              style={{
+                fontSize: 18,
+                fontWeight: 700,
+                color: "#16a34a",
+                marginBottom: 6,
+              }}
             >
-              📞 Call Now
-            </a>
+              ₹ {selected.price}
+            </div>
+
+            {/* ACTION BUTTONS */}
+            <div style={{ display: "flex", gap: 8 }}>
+              <a
+                href={`tel:${selected.phone}`}
+                style={{
+                  flex: 1,
+                  textAlign: "center",
+                  padding: "6px 0",
+                  background: "#16a34a",
+                  color: "#fff",
+                  borderRadius: 6,
+                  fontSize: 14,
+                  textDecoration: "none",
+                }}
+              >
+                📞 Call
+              </a>
+
+              <a
+                href={`https://wa.me/${selected.phone}`}
+                target="_blank"
+                style={{
+                  flex: 1,
+                  textAlign: "center",
+                  padding: "6px 0",
+                  background: "#25D366",
+                  color: "#fff",
+                  borderRadius: 6,
+                  fontSize: 14,
+                  textDecoration: "none",
+                }}
+              >
+                💬 WhatsApp
+              </a>
+            </div>
           </div>
         </InfoWindow>
       )}
