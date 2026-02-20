@@ -33,109 +33,139 @@ export default function Home() {
   if (!isLoaded) return <div>Loading map...</div>;
 
   return (
-    <GoogleMap mapContainerStyle={containerStyle} center={center} zoom={12}>
-      {properties.map((p) => {
-        if (!p.lat || !p.lng) return null;
+    <div style={{ position: "relative" }}>
+      {/* MAP */}
+      <GoogleMap mapContainerStyle={containerStyle} center={center} zoom={12}>
+        {properties.map((p) => {
+          if (!p.lat || !p.lng) return null;
 
-        return (
-          <Marker
-            key={p.id}
-            position={{ lat: Number(p.lat), lng: Number(p.lng) }}
-            onClick={() => setSelected(p)}
-          />
-        );
-      })}
+          return (
+            <Marker
+              key={p.id}
+              position={{ lat: Number(p.lat), lng: Number(p.lng) }}
+              onClick={() => setSelected(p)}
+            />
+          );
+        })}
 
-      {selected && (
-        <InfoWindow
-          position={{
-            lat: Number(selected.lat),
-            lng: Number(selected.lng),
-          }}
-          onCloseClick={() => setSelected(null)}
-        >
-          <div
-            style={{
-              width: 260,
-              fontFamily: "system-ui, sans-serif",
+        {selected && (
+          <InfoWindow
+            position={{
+              lat: Number(selected.lat),
+              lng: Number(selected.lng),
             }}
+            onCloseClick={() => setSelected(null)}
           >
-            {/* IMAGE */}
-            {selected.image_url && (
-              <img
-                src={selected.image_url}
-                alt="property"
-                style={{
-                  width: "100%",
-                  height: 150,
-                  objectFit: "cover",
-                  borderRadius: 10,
-                  marginBottom: 8,
-                }}
-              />
-            )}
-
-            {/* TITLE */}
             <div
               style={{
-                fontWeight: 600,
-                fontSize: 16,
-                marginBottom: 4,
+                width: 260,
+                fontFamily: "system-ui, sans-serif",
               }}
             >
-              {selected.title}
-            </div>
+              {selected.image_url && (
+                <img
+                  src={selected.image_url}
+                  alt="property"
+                  style={{
+                    width: "100%",
+                    height: 150,
+                    objectFit: "cover",
+                    borderRadius: 10,
+                    marginBottom: 8,
+                  }}
+                />
+              )}
 
-            {/* PRICE */}
-            <div
-              style={{
-                fontSize: 18,
-                fontWeight: 700,
-                color: "#16a34a",
-                marginBottom: 6,
-              }}
-            >
-              ₹ {selected.price}
-            </div>
+              <div style={{ fontWeight: 600, fontSize: 16 }}>
+                {selected.title}
+              </div>
 
-            {/* ACTION BUTTONS */}
-            <div style={{ display: "flex", gap: 8 }}>
-              <a
-                href={`tel:${selected.phone}`}
+              <div
                 style={{
-                  flex: 1,
-                  textAlign: "center",
-                  padding: "6px 0",
-                  background: "#16a34a",
-                  color: "#fff",
-                  borderRadius: 6,
-                  fontSize: 14,
-                  textDecoration: "none",
+                  fontSize: 18,
+                  fontWeight: 700,
+                  color: "#16a34a",
+                  margin: "4px 0 8px",
                 }}
               >
-                📞 Call
-              </a>
+                ₹ {selected.price}
+              </div>
 
-              <a
-                href={`https://wa.me/${selected.phone}`}
-                target="_blank"
-                style={{
-                  flex: 1,
-                  textAlign: "center",
-                  padding: "6px 0",
-                  background: "#25D366",
-                  color: "#fff",
-                  borderRadius: 6,
-                  fontSize: 14,
-                  textDecoration: "none",
-                }}
-              >
-                💬 WhatsApp
-              </a>
+              <div style={{ display: "flex", gap: 8 }}>
+                <a
+                  href={`tel:${selected.phone}`}
+                  style={callBtn}
+                >
+                  📞 Call
+                </a>
+
+                <a
+                  href={`https://wa.me/${selected.phone}`}
+                  target="_blank"
+                  style={waBtn}
+                >
+                  💬 WhatsApp
+                </a>
+              </div>
             </div>
-          </div>
-        </InfoWindow>
-      )}
-    </GoogleMap>
+          </InfoWindow>
+        )}
+      </GoogleMap>
+
+      {/* FLOATING ADD BUTTON */}
+      <a href="/add" style={fab}>
+        <div style={fabIcon}>＋</div>
+        <div style={fabText}>Add Property</div>
+      </a>
+    </div>
   );
 }
+
+// Styles
+const fab = {
+  position: "fixed",
+  bottom: 20,
+  right: 20,
+  background: "#16a34a",
+  color: "#fff",
+  borderRadius: 30,
+  padding: "10px 14px",
+  display: "flex",
+  alignItems: "center",
+  gap: 6,
+  textDecoration: "none",
+  boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
+  zIndex: 999,
+  fontWeight: 600,
+};
+
+const fabIcon = {
+  fontSize: 20,
+  lineHeight: 1,
+};
+
+const fabText = {
+  fontSize: 14,
+};
+
+const callBtn = {
+  flex: 1,
+  textAlign: "center",
+  padding: "6px 0",
+  background: "#16a34a",
+  color: "#fff",
+  borderRadius: 6,
+  fontSize: 14,
+  textDecoration: "none",
+};
+
+const waBtn = {
+  flex: 1,
+  textAlign: "center",
+  padding: "6px 0",
+  background: "#25D366",
+  color: "#fff",
+  borderRadius: 6,
+  fontSize: 14,
+  textDecoration: "none",
+};
