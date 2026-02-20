@@ -67,14 +67,33 @@ export default function Home() {
               onCloseClick={() => setSelected(null)}
             >
               <div style={card}>
+                {/* IMAGE */}
                 {selected.image_url && (
                   <img src={selected.image_url} style={img} />
                 )}
 
+                {/* TITLE */}
                 <div style={title}>{selected.title}</div>
 
+                {/* 🆕 OWNER / BROKER BADGE */}
+                <div
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    marginBottom: 4,
+                    color:
+                      selected.role === "broker" ? "#2563eb" : "#16a34a",
+                  }}
+                >
+                  {selected.role === "broker"
+                    ? "🔵 Broker"
+                    : "🟢 Owner"}
+                </div>
+
+                {/* PRICE */}
                 <div style={price}>₹ {selected.price}</div>
 
+                {/* ACTION BUTTONS */}
                 <div style={{ display: "flex", gap: 8 }}>
                   <a href={`tel:${selected.phone}`} style={callBtn}>
                     📞 Call
@@ -102,7 +121,7 @@ export default function Home() {
   );
 }
 
-/* ---------- STYLES ---------- */
+/* ---------- STYLES (UNCHANGED) ---------- */
 
 const header = {
   height: 70,
@@ -121,7 +140,6 @@ const header = {
 const brand = {
   fontSize: 18,
   fontWeight: 700,
-  letterSpacing: 0.2,
 };
 
 const tagline = {

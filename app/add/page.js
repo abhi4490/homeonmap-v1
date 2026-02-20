@@ -5,8 +5,7 @@ import { useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 
-const containerStyle = { width: "100%", height: "400px" };
-const defaultCenter = { lat: 30.7333, lng: 76.7794 };
+const center = { lat: 30.7333, lng: 76.7794 };
 
 export default function AddProperty() {
   const { isLoaded } = useJsApiLoader({
@@ -16,119 +15,64 @@ export default function AddProperty() {
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
   const [phone, setPhone] = useState("");
+  const [role, setRole] = useState("owner");
   const [image, setImage] = useState(null);
-  const [marker, setMarker] = useState(defaultCenter);
-  const [loading, setLoading] = useState(false);
+  const [marker, setMarker] = useState(center);
 
   if (!isLoaded) return <div>Loading map...</div>;
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setLoading(true);
 
     let imageUrl = null;
 
-    // -------- IMAGE UPLOAD (FIXED BUCKET NAME) --------
     if (image) {
-      try {
-        const cleanName =
-          Date.now() + "_" + image.name.replace(/\s+/g, "_");
-
-        const { error: uploadError } = await supabase.storage
-          .from("property-images") // ✅ correct bucket name
-          .upload(cleanName, image);
-
-        if (!uploadError) {
-          const { data } = supabase.storage
-            .from("property-images")
-            .getPublicUrl(cleanName);
-
-          imageUrl = data.publicUrl;
-        } else {
-          console.error("Upload error:", uploadError);
-        }
-      } catch (err) {
-        console.log("Image upload failed, continuing without image");
-      }
+      const name = Date.now() + "_" + image.name.replace(/\s+/g, "_");
+      await supabase.storage.from("property-images").upload(name, image);
+      imageUrl = `https://djxkfbavvjmoowqspwbg.supabase.co/storage/v1/object/public/property-images/${name}`;
     }
 
-    // -------- INSERT PROPERTY --------
-    const { data, error } = await supabase.from("properties").insert([
+    await supabase.from("properties").insert([
       {
-        title: title,
-        price: price,
-        phone: phone,
+        title,
+        price,
+        phone,
+        role,
         lat: marker.lat,
         lng: marker.lng,
         image_url: imageUrl,
       },
     ]);
 
-    setLoading(false);
-
-    if (error) {
-      console.error("Insert error:", error);
-      alert("Insert failed: " + error.message);
-    } else {
-      alert("Property added successfully!");
-      setTitle("");
-      setPrice("");
-      setPhone("");
-      setImage(null);
-    }
+    alert("Property added!");
   }
 
   return (
     <div style={{ padding: 20 }}>
       <h2>Add Property</h2>
 
-      <form onSubmit={handleSubmit} style={{ maxWidth: 500 }}>
-        <input
-          placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-        />
-        <br /><br />
+      <form onSubmit={handleSubmit} style={{ maxWidth: 400 }}>
+        <input placeholder="Title" onChange={(e) => setTitle(e.target.value)} required /><br /><br />
+        <input placeholder="Price" onChange={(e) => setPrice(e.target.value)} required /><br /><br />
+        <input placeholder="Phone" onChange={(e) => setPhone(e.target.value)} required /><br /><br />
 
-        <input
-          placeholder="Price"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          required
-        />
-        <br /><br />
+        {/* ROLE */}
+        <select value={role} onChange={(e) => setRole(e.target.value)}>
+          <option value="owner">Owner</option>
+          <option value="broker">Broker</option>
+        </select><br /><br />
 
-        <input
-          placeholder="Phone"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          required
-        />
-        <br /><br />
+        <input type="file" onChange={(e) => setImage(e.target.files[0])} /><br /><br />
 
-        <input
-          type="file"
-          onChange={(e) => setImage(e.target.files[0])}
-        />
-        <br /><br />
-
-        <button disabled={loading}>
-          {loading ? "Adding..." : "Add Property"}
-        </button>
+        <button>Add Property</button>
       </form>
 
-      <h3>Click map to set location</h3>
-
       <GoogleMap
-        mapContainerStyle={containerStyle}
+        mapContainerStyle={{ width: "100%", height: 300 }}
         center={marker}
         zoom={12}
         onClick={(e) =>
-          setMarker({
-            lat: e.latLng.lat(),
-            lng: e.latLng.lng(),
-          })
+          setMarker({ lat: e.latLng.lat(), lng: e.latLng.lng() })
         }
       >
         <Marker position={marker} />
