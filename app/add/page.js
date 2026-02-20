@@ -7,18 +7,21 @@ export default function AddProperty() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Restore session after redirect
+  // 🔥 Proper session restore
   useEffect(() => {
-    checkUser();
+    getUser();
 
-    const { data: listener } = supabase.auth.onAuthStateChange(() => {
-      checkUser();
-    });
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
+    );
 
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  async function checkUser() {
+  async function getUser() {
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -27,7 +30,7 @@ export default function AddProperty() {
     setLoading(false);
   }
 
-  // 🚀 Google login with intent saving
+  // Google login
   async function loginWithGoogle() {
     localStorage.setItem("returnToAdd", "true");
 
@@ -40,15 +43,18 @@ export default function AddProperty() {
   }
 
   if (loading) {
-    return <div style={{ textAlign: "center", marginTop: 120 }}>Checking login...</div>;
+    return (
+      <div style={{ textAlign: "center", marginTop: 120 }}>
+        Checking login...
+      </div>
+    );
   }
 
+  // 🚫 Not logged in
   if (!user) {
     return (
       <div style={{ textAlign: "center", marginTop: 120 }}>
         <h2>Login Required</h2>
-        <p>You must login to add property</p>
-
         <button
           onClick={loginWithGoogle}
           style={{
@@ -67,11 +73,18 @@ export default function AddProperty() {
     );
   }
 
+  // ✅ Logged in state
   return (
     <div style={{ padding: 20 }}>
       <h2>Add Property</h2>
-      <p>Logged in as <b>{user.email}</b></p>
-      <p>✅ Login stable. Form will be added next.</p>
+
+      <p>
+        Logged in as <b>{user.email}</b>
+      </p>
+
+      <hr />
+
+      <p>✅ Login working. Next: property form.</p>
     </div>
   );
 }
