@@ -18,9 +18,14 @@ export default function AddProperty() {
   }
 
   async function loginWithGoogle() {
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-    });
+    async function loginWithGoogle() {
+  await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: window.location.origin + "/add",
+    },
+  });
+}
   }
 
   async function logout() {
