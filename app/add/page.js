@@ -16,7 +16,8 @@ export default function AddProperty() {
   const [price, setPrice] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
+  const [otpInput, setOtpInput] = useState("");
+  const [generatedOtp, setGeneratedOtp] = useState("");
   const [verified, setVerified] = useState(false);
   const [role, setRole] = useState("owner");
   const [image, setImage] = useState(null);
@@ -24,27 +25,30 @@ export default function AddProperty() {
 
   if (!isLoaded) return <div>Loading map...</div>;
 
-  // 📧 SEND EMAIL OTP
-  async function sendOtp() {
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: true,
-      },
-    });
-
-    if (!error) alert("OTP sent to your email 📧");
+  // 🔢 GENERATE OTP
+  function generateOtp() {
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    return otp;
   }
 
-  // 🔐 VERIFY EMAIL OTP
-  async function verifyOtp() {
-    const { error } = await supabase.auth.verifyOtp({
-      email,
-      token: otp,
-      type: "email",
-    });
+  // 📧 SEND OTP (DEV MODE)
+  async function sendOtp() {
+    const otp = generateOtp();
+    setGeneratedOtp(otp);
 
-    if (!error) {
+    await supabase.from("email_otps").insert([
+      {
+        email,
+        otp,
+      },
+    ]);
+
+    alert(`OTP (dev mode): ${otp}`);
+  }
+
+  // 🔐 VERIFY OTP
+  async function verifyOtp() {
+    if (otpInput === generatedOtp) {
       setVerified(true);
       alert("Email verified ✅");
     } else {
@@ -60,7 +64,7 @@ export default function AddProperty() {
       return;
     }
 
-    // Listing limit (5 free)
+    // Listing limit
     const { data: existing } = await supabase
       .from("properties")
       .select("id")
@@ -75,9 +79,7 @@ export default function AddProperty() {
 
     if (image) {
       const name = Date.now() + "_" + image.name.replace(/\s+/g, "_");
-
       await supabase.storage.from("property-images").upload(name, image);
-
       imageUrl = `https://djxkfbavvjmoowqspwbg.supabase.co/storage/v1/object/public/property-images/${name}`;
     }
 
@@ -93,7 +95,7 @@ export default function AddProperty() {
       },
     ]);
 
-    alert("Property added successfully 🎉");
+    alert("Property added 🎉");
   }
 
   return (
@@ -116,9 +118,9 @@ export default function AddProperty() {
         <br /><br />
 
         <input
-          placeholder="Enter Email OTP"
-          value={otp}
-          onChange={(e) => setOtp(e.target.value)}
+          placeholder="Enter OTP"
+          value={otpInput}
+          onChange={(e) => setOtpInput(e.target.value)}
         />
         <button type="button" onClick={verifyOtp}>Verify OTP</button>
 
