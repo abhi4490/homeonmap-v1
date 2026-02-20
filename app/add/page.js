@@ -8,8 +8,8 @@ export default function AddProperty() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
       setLoading(false);
     });
   }, []);
@@ -23,7 +23,9 @@ export default function AddProperty() {
     });
   }
 
-  if (loading) return <div style={{ textAlign: "center", marginTop: 100 }}>Loading...</div>;
+  if (loading) {
+    return <div style={{ textAlign: "center", marginTop: 100 }}>Checking login...</div>;
+  }
 
   if (!user) {
     return (
@@ -38,7 +40,7 @@ export default function AddProperty() {
     <div style={{ padding: 20 }}>
       <h2>Add Property</h2>
       <p>Logged in as {user.email}</p>
-      <p>✅ Auth is now fixed permanently.</p>
+      <p>✅ OAuth loop fixed.</p>
     </div>
   );
 }
