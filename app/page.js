@@ -1,5 +1,4 @@
 "use client";
-
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
@@ -35,30 +34,64 @@ export default function Home() {
 
   async function fetchProperties() {
     const { data } = await supabase.from("properties").select("*");
-    if (data) setProperties(data);
+    setProperties(data || []);
   }
 
   if (!isLoaded) return <div>Loading map...</div>;
 
   return (
     <GoogleMap mapContainerStyle={containerStyle} center={center} zoom={12}>
-      {properties.map((p) => (
-        <Marker
-          key={p.id}
-          position={{ lat: p.lat, lng: p.lng }}
-          onClick={() => setSelected(p)}
-        />
-      ))}
+      {properties.map((p) => {
+        if (!p.lat || !p.lng) return null;
+
+        return (
+          <Marker
+            key={p.id}
+            position={{ lat: Number(p.lat), lng: Number(p.lng) }}
+            onClick={() => setSelected(p)}
+          />
+        );
+      })}
 
       {selected && (
         <InfoWindow
-          position={{ lat: selected.lat, lng: selected.lng }}
+          position={{
+            lat: Number(selected.lat),
+            lng: Number(selected.lng),
+          }}
           onCloseClick={() => setSelected(null)}
         >
-          <div>
-            <h4>{selected.title}</h4>
-            <p>₹ {selected.price}</p>
-            <a href={`tel:${selected.phone}`}>Call</a>
+          <div style={{ width: 200 }}>
+            {/* Image */}
+            {selected.image_url && (
+              <img
+                src={selected.image_url}
+                alt="property"
+                style={{
+                  width: "100%",
+                  height: 120,
+                  objectFit: "cover",
+                  borderRadius: 8,
+                  marginBottom: 8,
+                }}
+              />
+            )}
+
+            {/* Title */}
+            <strong>{selected.title}</strong>
+            <br />
+
+            {/* Price */}
+            <span>₹ {selected.price}</span>
+            <br />
+
+            {/* Call */}
+            <a
+              href={`tel:${selected.phone}`}
+              style={{ color: "green", fontWeight: "bold" }}
+            >
+              📞 Call Now
+            </a>
           </div>
         </InfoWindow>
       )}
