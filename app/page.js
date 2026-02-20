@@ -10,7 +10,6 @@ import {
   useJsApiLoader,
 } from "@react-google-maps/api";
 
-const containerStyle = { width: "100%", height: "100vh" };
 const center = { lat: 30.7333, lng: 76.7794 };
 
 export default function Home() {
@@ -33,95 +32,128 @@ export default function Home() {
   if (!isLoaded) return <div>Loading map...</div>;
 
   return (
-    <div style={{ position: "relative" }}>
+    <div>
+      {/* PREMIUM HEADER */}
+      <header style={header}>
+        <div style={brand}>🏠 HomeOnMap</div>
+        <div style={tagline}>Find properties directly on the map</div>
+      </header>
+
       {/* MAP */}
-      <GoogleMap mapContainerStyle={containerStyle} center={center} zoom={12}>
-        {properties.map((p) => {
-          if (!p.lat || !p.lng) return null;
+      <div style={{ height: "calc(100vh - 70px)" }}>
+        <GoogleMap
+          mapContainerStyle={{ width: "100%", height: "100%" }}
+          center={center}
+          zoom={12}
+        >
+          {properties.map((p) => {
+            if (!p.lat || !p.lng) return null;
 
-          return (
-            <Marker
-              key={p.id}
-              position={{ lat: Number(p.lat), lng: Number(p.lng) }}
-              onClick={() => setSelected(p)}
-            />
-          );
-        })}
+            return (
+              <Marker
+                key={p.id}
+                position={{ lat: Number(p.lat), lng: Number(p.lng) }}
+                onClick={() => setSelected(p)}
+              />
+            );
+          })}
 
-        {selected && (
-          <InfoWindow
-            position={{
-              lat: Number(selected.lat),
-              lng: Number(selected.lng),
-            }}
-            onCloseClick={() => setSelected(null)}
-          >
-            <div
-              style={{
-                width: 260,
-                fontFamily: "system-ui, sans-serif",
+          {selected && (
+            <InfoWindow
+              position={{
+                lat: Number(selected.lat),
+                lng: Number(selected.lng),
               }}
+              onCloseClick={() => setSelected(null)}
             >
-              {selected.image_url && (
-                <img
-                  src={selected.image_url}
-                  alt="property"
-                  style={{
-                    width: "100%",
-                    height: 150,
-                    objectFit: "cover",
-                    borderRadius: 10,
-                    marginBottom: 8,
-                  }}
-                />
-              )}
+              <div style={card}>
+                {selected.image_url && (
+                  <img src={selected.image_url} style={img} />
+                )}
 
-              <div style={{ fontWeight: 600, fontSize: 16 }}>
-                {selected.title}
+                <div style={title}>{selected.title}</div>
+
+                <div style={price}>₹ {selected.price}</div>
+
+                <div style={{ display: "flex", gap: 8 }}>
+                  <a href={`tel:${selected.phone}`} style={callBtn}>
+                    📞 Call
+                  </a>
+
+                  <a
+                    href={`https://wa.me/${selected.phone}`}
+                    target="_blank"
+                    style={waBtn}
+                  >
+                    💬 WhatsApp
+                  </a>
+                </div>
               </div>
+            </InfoWindow>
+          )}
+        </GoogleMap>
+      </div>
 
-              <div
-                style={{
-                  fontSize: 18,
-                  fontWeight: 700,
-                  color: "#16a34a",
-                  margin: "4px 0 8px",
-                }}
-              >
-                ₹ {selected.price}
-              </div>
-
-              <div style={{ display: "flex", gap: 8 }}>
-                <a
-                  href={`tel:${selected.phone}`}
-                  style={callBtn}
-                >
-                  📞 Call
-                </a>
-
-                <a
-                  href={`https://wa.me/${selected.phone}`}
-                  target="_blank"
-                  style={waBtn}
-                >
-                  💬 WhatsApp
-                </a>
-              </div>
-            </div>
-          </InfoWindow>
-        )}
-      </GoogleMap>
-
-      {/* FLOATING ADD BUTTON */}
+      {/* FLOATING BUTTON */}
       <a href="/add" style={fab}>
-        <div style={fabIcon}>＋</div>
-        <div style={fabText}>Add Property</div>
+        ＋ Add Property
       </a>
     </div>
   );
 }
 
-// Styles
+/* ---------- STYLES ---------- */
+
+const header = {
+  height: 70,
+  padding: "12px 20px",
+  background: "#ffffff",
+  borderBottom: "1px solid #eee",
+  position: "sticky",
+  top: 0,
+  zIndex: 1000,
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "center",
+  boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+};
+
+const brand = {
+  fontSize: 18,
+  fontWeight: 700,
+  letterSpacing: 0.2,
+};
+
+const tagline = {
+  fontSize: 12,
+  color: "#666",
+};
+
+const card = {
+  width: 260,
+  fontFamily: "system-ui, sans-serif",
+};
+
+const img = {
+  width: "100%",
+  height: 150,
+  objectFit: "cover",
+  borderRadius: 10,
+  marginBottom: 8,
+};
+
+const title = {
+  fontWeight: 600,
+  fontSize: 16,
+};
+
+const price = {
+  fontSize: 18,
+  fontWeight: 700,
+  color: "#16a34a",
+  margin: "4px 0 8px",
+};
+
 const fab = {
   position: "fixed",
   bottom: 20,
@@ -129,23 +161,10 @@ const fab = {
   background: "#16a34a",
   color: "#fff",
   borderRadius: 30,
-  padding: "10px 14px",
-  display: "flex",
-  alignItems: "center",
-  gap: 6,
+  padding: "12px 16px",
   textDecoration: "none",
-  boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
-  zIndex: 999,
   fontWeight: 600,
-};
-
-const fabIcon = {
-  fontSize: 20,
-  lineHeight: 1,
-};
-
-const fabText = {
-  fontSize: 14,
+  boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
 };
 
 const callBtn = {
