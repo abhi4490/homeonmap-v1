@@ -2,138 +2,182 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
-import {
-  GoogleMap,
-  Marker,
-  useJsApiLoader,
-} from "@react-google-maps/api";
+import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
+import { useRouter } from "next/navigation";
 
 const center = { lat: 30.7333, lng: 76.7794 };
 
-export default function AddProperty() {
-  const [user, setUser] = useState(null);
-  const [title, setTitle] = useState("");
-  const [price, setPrice] = useState("");
-  const [phone, setPhone] = useState("");
-  const [image, setImage] = useState(null);
-  const [marker, setMarker] = useState(null);
+export default function AddPropertyPage() {
+  const router = useRouter();
 
+  // 🔒 SAME LOADER ID AS HOMEPAGE
   const { isLoaded } = useJsApiLoader({
+    id: "google-map-script",
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
   });
 
+  const [user, setUser] = useState(null);
+  const [marker, setMarker] = useState(center);
+  const [loading, setLoading] = useState(false);
+
+  const [title, setTitle] = useState("");
+  const [price, setPrice] = useState("");
+  const [locality, setLocality] = useState("");
+  const [phone, setPhone] = useState("");
+  const [image, setImage] = useState(null);
+
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null);
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
     });
   }, []);
 
-  async function loginWithGoogle() {
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin + "/add",
-      },
+  const handleMapClick = (e) => {
+    setMarker({
+      lat: e.latLng.lat(),
+      lng: e.latLng.lng(),
     });
-  }
+  };
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+  const uploadImage = async () => {
+    if (!image) return null;
 
-    if (!marker) {
-      alert("Please select location on map");
+    const fileName = Date.now() + "_" + image.name;
+
+    const { error } = await supabase.storage
+      .from("property-images")
+      .upload(fileName, image);
+
+    if (error) {
+      alert("Image upload failed");
+      return null;
+    }
+
+    return `https://djxkfbavvjmoowqspwbg.supabase.co/storage/v1/object/public/property-images/${fileName}`;
+  };
+
+  const handleSubmit = async () => {
+    if (!user) {
+      alert("Please login first");
       return;
     }
 
-    let imageUrl = null;
-
-    // Upload image
-    if (image) {
-      const name = Date.now() + "_" + image.name.replace(/\s+/g, "_");
-
-      await supabase.storage
-        .from("property-images")
-        .upload(name, image);
-
-      imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/property-images/${name}`;
+    if (!title || !price || !locality) {
+      alert("Please fill all fields");
+      return;
     }
 
-    // Insert property
-    await supabase.from("properties").insert([
-      {
+    if (!/^\d{10}$/.test(phone)) {
+      alert("Enter valid 10 digit mobile number");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const imageUrl = await uploadImage();
+
+      const { error } = await supabase.from("properties").insert({
         title,
-        price,
+        price: Number(price),
+        locality,
         phone,
         lat: marker.lat,
         lng: marker.lng,
         image_url: imageUrl,
-        user_id: user.id, // 🔥 ownership
-      },
-    ]);
+        user_id: user.id,
+      });
 
-    alert("Property added 🎉");
-    window.location.href = "/";
-  }
+      if (error) throw error;
 
-  if (!user) {
-    return (
-      <div style={{ textAlign: "center", marginTop: 100 }}>
-        <h2>Login Required</h2>
-        <button onClick={loginWithGoogle}>
-          Continue with Google
-        </button>
-      </div>
-    );
-  }
+      alert("Property added successfully!");
+      router.push("/");
+    } catch (err) {
+      console.error(err);
+      alert("Error adding property");
+    }
 
-  if (!isLoaded) return <div>Loading map...</div>;
+    setLoading(false);
+  };
+
+  if (!user) return <div style={{ padding: 20 }}>Checking login...</div>;
+  if (!isLoaded) return <div style={{ padding: 20 }}>Loading map...</div>;
 
   return (
-    <div style={{ padding: 20 }}>
+    <div style={{ maxWidth: 600, margin: "auto", padding: 20 }}>
       <h2>Add Property</h2>
-      <p>Logged in as {user.email}</p>
 
-      <form onSubmit={handleSubmit}>
-        <input
-          placeholder="Title"
-          onChange={(e) => setTitle(e.target.value)}
-          required
-        /><br /><br />
+      <input
+        placeholder="Title"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        style={input}
+      />
 
-        <input
-          placeholder="Price"
-          onChange={(e) => setPrice(e.target.value)}
-          required
-        /><br /><br />
+      <input
+        placeholder="Price"
+        inputMode="numeric"
+        value={price}
+        onChange={(e) => setPrice(e.target.value)}
+        style={input}
+      />
 
-        <input
-          placeholder="Phone"
-          onChange={(e) => setPhone(e.target.value)}
-          required
-        /><br /><br />
+      <input
+        placeholder="Locality"
+        value={locality}
+        onChange={(e) => setLocality(e.target.value)}
+        style={input}
+      />
 
-        <input
-          type="file"
-          onChange={(e) => setImage(e.target.files[0])}
-        /><br /><br />
+      <input
+        placeholder="Mobile Number"
+        inputMode="numeric"
+        maxLength={10}
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
+        style={input}
+      />
 
-        <GoogleMap
-          mapContainerStyle={{ height: 300, width: "100%" }}
-          center={center}
-          zoom={12}
-          onClick={(e) =>
-            setMarker({
-              lat: e.latLng.lat(),
-              lng: e.latLng.lng(),
-            })
-          }
-        >
-          {marker && <Marker position={marker} />}
-        </GoogleMap>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(e) => setImage(e.target.files[0])}
+        style={{ marginTop: 12 }}
+      />
 
-        <br />
-        <button>Add Property</button>
-      </form>
+      <p style={{ marginTop: 12 }}>Click map to place pin</p>
+
+      <GoogleMap
+        mapContainerStyle={{ height: 320, borderRadius: 12 }}
+        center={marker}
+        zoom={12}
+        onClick={handleMapClick}
+      >
+        <Marker position={marker} />
+      </GoogleMap>
+
+      <button onClick={handleSubmit} style={btn} disabled={loading}>
+        {loading ? "Posting..." : "Post Property"}
+      </button>
     </div>
   );
 }
+
+const input = {
+  width: "100%",
+  padding: 10,
+  marginTop: 10,
+  borderRadius: 8,
+  border: "1px solid #ddd",
+};
+
+const btn = {
+  marginTop: 16,
+  padding: 12,
+  width: "100%",
+  borderRadius: 10,
+  border: "none",
+  background: "#000",
+  color: "#fff",
+  fontWeight: 600,
+};
