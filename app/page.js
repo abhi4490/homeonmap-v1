@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { supabase } from "../lib/supabase";
 import {
   GoogleMap,
@@ -9,124 +10,232 @@ import {
   useJsApiLoader,
 } from "@react-google-maps/api";
 
+const containerStyle = {
+  width: "100%",
+  height: "100vh",
+};
+
 const center = { lat: 30.7333, lng: 76.7794 };
 
-export default function Home() {
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
-  });
-
+export default function HomePage() {
   const [properties, setProperties] = useState([]);
   const [selected, setSelected] = useState(null);
 
+  const { isLoaded } = useJsApiLoader({
+    id: "google-map-script", // DO NOT CHANGE
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+  });
+
   useEffect(() => {
-    fetchProperties();
+    loadProperties();
   }, []);
 
-  async function fetchProperties() {
-    const { data } = await supabase
-      .from("properties")
-      .select("*")
-      .order("id", { ascending: false });
-
+  const loadProperties = async () => {
+    const { data } = await supabase.from("properties").select("*");
     setProperties(data || []);
-  }
+  };
 
-  if (!isLoaded) return <div>Loading map...</div>;
+  if (!isLoaded) return <div style={{ padding: 20 }}>Loading map...</div>;
 
   return (
     <div>
-      {/* Header */}
-      <header style={header}>
-        <div>
-          <div style={brand}>🏠 HomeOnMap</div>
-          <div style={tagline}>Find properties directly on the map</div>
+      {/* PREMIUM HEADER */}
+      <div style={header}>
+        <div style={brand}>
+          <span style={logo}>🏠</span>
+          <span style={title}>HomeOnMap</span>
         </div>
 
-        <div style={{ display: "flex", gap: 10 }}>
-          <a href="/my-listings" style={linkBtn}>My Listings</a>
-          <a href="/add" style={addBtn}>Add Property</a>
+        <div style={nav}>
+          <Link href="/add" style={primaryBtn}>
+            + Add Property
+          </Link>
+          <Link href="/my-listings" style={secondaryBtn}>
+            My Listings
+          </Link>
         </div>
-      </header>
-
-      {/* Map */}
-      <div style={{ height: "calc(100vh - 70px)" }}>
-        <GoogleMap
-          mapContainerStyle={{ width: "100%", height: "100%" }}
-          center={center}
-          zoom={12}
-        >
-          {properties.map((p) => {
-            if (!p.lat || !p.lng) return null;
-
-            return (
-              <Marker
-                key={p.id}
-                position={{ lat: Number(p.lat), lng: Number(p.lng) }}
-                onClick={() => setSelected(p)}
-              />
-            );
-          })}
-
-          {selected && (
-            <InfoWindow
-              position={{
-                lat: Number(selected.lat),
-                lng: Number(selected.lng),
-              }}
-              onCloseClick={() => setSelected(null)}
-            >
-              <div style={{ width: 240 }}>
-                {selected.image_url && (
-                  <img src={selected.image_url} style={{ width: "100%", borderRadius: 8 }} />
-                )}
-                <div style={{ fontWeight: 600 }}>{selected.title}</div>
-                <div style={{ color: "#16a34a", fontWeight: 700 }}>
-                  ₹ {selected.price}
-                </div>
-
-                <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-                  <a href={`tel:${selected.phone}`}>📞 Call</a>
-                  <a href={`https://wa.me/${selected.phone}`} target="_blank">
-                    💬 WhatsApp
-                  </a>
-                </div>
-              </div>
-            </InfoWindow>
-          )}
-        </GoogleMap>
       </div>
+
+      {/* MAP */}
+      <GoogleMap
+        mapContainerStyle={containerStyle}
+        center={center}
+        zoom={11}
+      >
+        {properties.map((p) => (
+          <Marker
+            key={p.id}
+            position={{ lat: p.lat, lng: p.lng }}
+            onClick={() => setSelected(p)}
+          />
+        ))}
+
+        {/* PREMIUM PROPERTY CARD */}
+        {selected && (
+          <InfoWindow
+            position={{ lat: selected.lat, lng: selected.lng }}
+            onCloseClick={() => setSelected(null)}
+          >
+            <div style={card}>
+              {/* IMAGE */}
+              {selected.image_url && (
+                <img
+                  src={selected.image_url}
+                  style={cardImage}
+                />
+              )}
+
+              {/* TITLE */}
+              <div style={cardTitle}>{selected.title}</div>
+
+              {/* LOCALITY */}
+              {selected.locality && (
+                <div style={cardSub}>📍 {selected.locality}</div>
+              )}
+
+              {/* PRICE */}
+              <div style={price}>
+                ₹ {Number(selected.price).toLocaleString("en-IN")}
+              </div>
+
+              {/* ACTIONS */}
+              <div style={actions}>
+                {selected.phone && (
+                  <a
+                    href={`tel:${selected.phone}`}
+                    style={callBtn}
+                  >
+                    Call
+                  </a>
+                )}
+
+                {selected.phone && (
+                  <a
+                    href={`https://wa.me/91${selected.phone}`}
+                    target="_blank"
+                    style={whatsappBtn}
+                  >
+                    WhatsApp
+                  </a>
+                )}
+              </div>
+            </div>
+          </InfoWindow>
+        )}
+      </GoogleMap>
     </div>
   );
 }
 
-/* styles */
+/* ================= STYLES ================= */
 
 const header = {
-  height: 70,
-  padding: "12px 20px",
-  background: "#fff",
-  borderBottom: "1px solid #eee",
+  position: "fixed",
+  top: 14,
+  left: 14,
+  right: 14,
+  height: 64,
+  background: "rgba(255,255,255,0.85)",
+  backdropFilter: "blur(14px)",
+  borderRadius: 14,
   display: "flex",
-  justifyContent: "space-between",
   alignItems: "center",
+  justifyContent: "space-between",
+  padding: "0 18px",
+  zIndex: 10,
+  boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
 };
 
-const brand = { fontSize: 18, fontWeight: 700 };
-const tagline = { fontSize: 12, color: "#666" };
-
-const linkBtn = {
-  padding: "6px 10px",
-  background: "#f1f5f9",
-  borderRadius: 6,
-  textDecoration: "none",
-  color: "#111",
+const brand = {
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
 };
 
-const addBtn = {
-  padding: "6px 10px",
-  background: "#16a34a",
-  borderRadius: 6,
-  textDecoration: "none",
+const logo = { fontSize: 22 };
+
+const title = {
+  fontWeight: 700,
+  fontSize: 18,
+};
+
+const nav = {
+  display: "flex",
+  gap: 10,
+};
+
+const primaryBtn = {
+  background: "#000",
   color: "#fff",
+  padding: "8px 14px",
+  borderRadius: 8,
+  textDecoration: "none",
+  fontWeight: 600,
+  fontSize: 14,
+};
+
+const secondaryBtn = {
+  border: "1px solid #000",
+  padding: "8px 14px",
+  borderRadius: 8,
+  textDecoration: "none",
+  fontWeight: 600,
+  fontSize: 14,
+};
+
+const card = {
+  width: 230,
+};
+
+const cardImage = {
+  width: "100%",
+  height: 120,
+  objectFit: "cover",
+  borderRadius: 8,
+  marginBottom: 6,
+};
+
+const cardTitle = {
+  fontWeight: 700,
+  fontSize: 15,
+};
+
+const cardSub = {
+  fontSize: 13,
+  color: "#666",
+  marginTop: 2,
+};
+
+const price = {
+  marginTop: 6,
+  fontWeight: 700,
+  fontSize: 16,
+};
+
+const actions = {
+  display: "flex",
+  gap: 8,
+  marginTop: 8,
+};
+
+const callBtn = {
+  flex: 1,
+  textAlign: "center",
+  background: "#111",
+  color: "#fff",
+  padding: "6px 8px",
+  borderRadius: 6,
+  textDecoration: "none",
+  fontSize: 13,
+};
+
+const whatsappBtn = {
+  flex: 1,
+  textAlign: "center",
+  background: "#16a34a",
+  color: "#fff",
+  padding: "6px 8px",
+  borderRadius: 6,
+  textDecoration: "none",
+  fontSize: 13,
 };
