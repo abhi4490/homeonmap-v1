@@ -5,80 +5,90 @@ import { supabase } from "../../lib/supabase";
 
 export default function MyListings() {
   const [user, setUser] = useState(null);
-  const [properties, setProperties] = useState([]);
+  const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    init();
+    load();
   }, []);
 
-  async function init() {
+  const load = async () => {
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    if (!session?.user) {
-      window.location.href = "/add";
+    if (!user) {
+      alert("Please login first");
       return;
     }
 
-    setUser(session.user);
-    fetchListings(session.user.id);
-  }
+    setUser(user);
 
-  async function fetchListings(userId) {
     const { data } = await supabase
       .from("properties")
       .select("*")
-      .eq("user_id", userId)
-      .order("id", { ascending: false });
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
 
-    setProperties(data || []);
+    setListings(data || []);
     setLoading(false);
-  }
+  };
 
-  async function deleteListing(id) {
+  const deleteListing = async (id) => {
     const confirmDelete = confirm("Delete this listing?");
     if (!confirmDelete) return;
 
     await supabase.from("properties").delete().eq("id", id);
 
-    setProperties(properties.filter((p) => p.id !== id));
-  }
+    setListings(listings.filter((l) => l.id !== id));
+  };
 
-  if (loading) {
-    return <div style={{ padding: 20 }}>Loading your listings...</div>;
-  }
+  if (loading) return <div style={{ padding: 20 }}>Loading...</div>;
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>My Listings</h2>
-      <p>Logged in as {user.email}</p>
+    <div style={container}>
+      <h2 style={title}>My Listings</h2>
 
-      {properties.length === 0 && (
-        <p>You haven’t posted anything yet.</p>
+      {listings.length === 0 && (
+        <p style={{ color: "#666" }}>No listings yet.</p>
       )}
 
       <div style={grid}>
-        {properties.map((p) => (
+        {listings.map((p) => (
           <div key={p.id} style={card}>
-            {p.image_url && <img src={p.image_url} style={img} />}
+            {/* Image */}
+            {p.image_url && (
+              <img src={p.image_url} style={image} />
+            )}
 
-            <div style={{ fontWeight: 600 }}>{p.title}</div>
-            <div style={{ color: "#16a34a", fontWeight: 700 }}>
-              ₹ {p.price}
+            {/* Title */}
+            <div style={cardTitle}>{p.title}</div>
+
+            {/* Locality */}
+            {p.locality && (
+              <div style={sub}>📍 {p.locality}</div>
+            )}
+
+            {/* Price */}
+            <div style={price}>
+              ₹ {Number(p.price).toLocaleString("en-IN")}
             </div>
 
-            <div style={{ fontSize: 12, color: "#666" }}>
-              📞 {p.phone}
-            </div>
+            {/* Buttons */}
+            <div style={actions}>
+              {p.phone && (
+                <a href={`tel:${p.phone}`} style={callBtn}>
+                  Call
+                </a>
+              )}
 
-            <button
-              onClick={() => deleteListing(p.id)}
-              style={deleteBtn}
-            >
-              Delete
-            </button>
+              <button
+                onClick={() => deleteListing(p.id)}
+                style={deleteBtn}
+              >
+                Delete
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -86,36 +96,80 @@ export default function MyListings() {
   );
 }
 
-/* styles */
+/* STYLES */
+
+const container = {
+  maxWidth: 900,
+  margin: "auto",
+  padding: 20,
+};
+
+const title = {
+  fontSize: 24,
+  fontWeight: 700,
+  marginBottom: 16,
+};
 
 const grid = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))",
   gap: 16,
-  marginTop: 20,
 };
 
 const card = {
-  border: "1px solid #eee",
-  borderRadius: 12,
-  padding: 12,
   background: "#fff",
+  borderRadius: 14,
+  padding: 14,
+  boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
 };
 
-const img = {
+const image = {
   width: "100%",
-  height: 140,
+  height: 180,
   objectFit: "cover",
-  borderRadius: 8,
+  borderRadius: 10,
   marginBottom: 8,
 };
 
-const deleteBtn = {
+const cardTitle = {
+  fontWeight: 700,
+  fontSize: 16,
+};
+
+const sub = {
+  fontSize: 13,
+  color: "#666",
+  marginTop: 2,
+};
+
+const price = {
+  fontWeight: 700,
+  marginTop: 6,
+  fontSize: 16,
+};
+
+const actions = {
+  display: "flex",
+  gap: 10,
   marginTop: 10,
+};
+
+const callBtn = {
+  flex: 1,
+  background: "#111",
+  color: "#fff",
+  border: "none",
+  borderRadius: 8,
+  padding: 8,
+  textAlign: "center",
+  textDecoration: "none",
+};
+
+const deleteBtn = {
+  flex: 1,
   background: "#ef4444",
   color: "#fff",
   border: "none",
-  padding: "6px 10px",
-  borderRadius: 6,
+  borderRadius: 8,
+  padding: 8,
   cursor: "pointer",
 };
