@@ -1,61 +1,49 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
+import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 
-const center = { lat: 30.7333, lng: 76.7794 };
+const mapContainerStyle = {
+  width: "100%",
+  height: "100vh",
+};
+
+const center = {
+  lat: 30.7333,
+  lng: 76.7794,
+};
 
 export default function HomePage() {
-  const [properties, setProperties] = useState([]);
-  const [selected, setSelected] = useState(null);
-
   const { isLoaded } = useJsApiLoader({
-    id: "google-map-script",
+    id: "google-map-script", // IMPORTANT: keep SAME everywhere
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
   });
+
+  const [properties, setProperties] = useState([]);
+  const [selected, setSelected] = useState(null);
 
   useEffect(() => {
     fetchProperties();
   }, []);
 
-  async function fetchProperties() {
-    const { data } = await supabase.from("properties").select("*");
+  const fetchProperties = async () => {
+    const { data } = await supabase
+      .from("properties")
+      .select("*")
+      .order("created_at", { ascending: false });
+
     setProperties(data || []);
-  }
+  };
 
   if (!isLoaded) return <div>Loading map...</div>;
 
   return (
-    <div style={{ height: "100vh", position: "relative" }}>
-      {/* HEADER */}
-      <div
-        style={{
-          position: "absolute",
-          top: 16,
-          left: 16,
-          right: 16,
-          zIndex: 10,
-          display: "flex",
-          justifyContent: "space-between",
-          background: "white",
-          padding: 12,
-          borderRadius: 12,
-          boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-        }}
-      >
-        <div style={{ fontWeight: "bold" }}>🏠 HomeOnMap</div>
-
-        <div style={{ display: "flex", gap: 12 }}>
-          <Link href="/add">+ Add Property</Link>
-          <Link href="/my-listings">My Listings</Link>
-        </div>
-      </div>
-
+    <div className="relative w-full h-screen">
       {/* MAP */}
       <GoogleMap
-        mapContainerStyle={{ width: "100%", height: "100%" }}
+        mapContainerStyle={mapContainerStyle}
         center={center}
         zoom={11}
       >
@@ -68,72 +56,85 @@ export default function HomePage() {
         ))}
       </GoogleMap>
 
-      {/* PREMIUM PROPERTY CARD */}
+      {/* HEADER */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[95%] max-w-4xl bg-white rounded-xl shadow-lg flex justify-between items-center px-5 py-3">
+        <div className="font-semibold text-lg">🏠 HomeOnMap</div>
+
+        <div className="flex gap-3">
+          <Link
+            href="/add"
+            className="bg-black text-white px-4 py-2 rounded-lg font-medium"
+          >
+            + Add Property
+          </Link>
+
+          <Link
+            href="/my-listings"
+            className="border px-4 py-2 rounded-lg font-medium"
+          >
+            My Listings
+          </Link>
+        </div>
+      </div>
+
+      {/* PREMIUM CARD */}
       {selected && (
-        <div
-          style={{
-            position: "absolute",
-            bottom: 20,
-            left: 20,
-            right: 20,
-            background: "white",
-            borderRadius: 16,
-            overflow: "hidden",
-            boxShadow: "0 10px 40px rgba(0,0,0,0.25)",
-          }}
-        >
-          {selected.image_url && (
-            <img
-              src={selected.image_url}
-              style={{
-                width: "100%",
-                height: 200,
-                objectFit: "cover",
-              }}
-            />
-          )}
+        <div className="absolute bottom-0 left-0 right-0 flex justify-center p-4">
+          <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden animate-slideUp">
+            {/* IMAGE */}
+            {selected.image_url && (
+              <img
+                src={selected.image_url}
+                className="w-full h-64 object-cover"
+              />
+            )}
 
-          <div style={{ padding: 16 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 600 }}>
-              {selected.title}
-            </h3>
+            <div className="p-5 space-y-3">
+              <h2 className="text-xl font-semibold">{selected.title}</h2>
 
-            <p style={{ color: "#666" }}>₹ {selected.price}</p>
+              <div className="text-lg font-bold text-gray-800">
+                ₹ {Number(selected.price).toLocaleString("en-IN")}
+              </div>
 
-            <div style={{ display: "flex", gap: 12, marginTop: 12 }}>
-              <a
-                href={`tel:${selected.phone}`}
-                style={{
-                  flex: 1,
-                  background: "#000",
-                  color: "#fff",
-                  textAlign: "center",
-                  padding: 10,
-                  borderRadius: 8,
-                  textDecoration: "none",
-                }}
-              >
-                Call
-              </a>
+              <div className="flex gap-3 mt-4">
+                {/* CALL */}
+                <a
+                  href={`tel:${selected.phone}`}
+                  className="flex-1 bg-black text-white text-center py-3 rounded-lg font-medium"
+                >
+                  Call
+                </a>
 
-              <a
-                href={`https://wa.me/91${selected.phone}`}
-                style={{
-                  flex: 1,
-                  background: "#25D366",
-                  color: "#fff",
-                  textAlign: "center",
-                  padding: 10,
-                  borderRadius: 8,
-                  textDecoration: "none",
-                }}
-              >
-                WhatsApp
-              </a>
+                {/* WHATSAPP */}
+                <a
+                  href={`https://wa.me/91${selected.phone}`}
+                  target="_blank"
+                  className="flex-1 bg-green-500 text-white text-center py-3 rounded-lg font-medium"
+                >
+                  WhatsApp
+                </a>
+              </div>
             </div>
           </div>
         </div>
       )}
+
+      <style jsx>{`
+        .animate-slideUp {
+          animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+          from {
+            transform: translateY(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 }
