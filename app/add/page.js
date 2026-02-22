@@ -19,10 +19,9 @@ const defaultCenter = {
 
 export default function AddPropertyPage() {
   const router = useRouter();
-
   const [marker, setMarker] = useState(defaultCenter);
-  const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
     title: "",
@@ -47,19 +46,16 @@ export default function AddPropertyPage() {
   };
 
   const validate = () => {
-    if (!form.title) return "Title required";
-    if (!form.price) return "Price required";
-    if (!form.locality) return "Locality required";
-    if (!/^\d{10}$/.test(form.phone)) return "Enter valid 10-digit phone";
+    if (!form.title) return "Enter title";
+    if (!form.price) return "Enter price";
+    if (!form.locality) return "Enter locality";
+    if (!/^\d{10}$/.test(form.phone)) return "Enter valid mobile number";
     return null;
   };
 
   const handleSubmit = async () => {
     const error = validate();
-    if (error) {
-      alert(error);
-      return;
-    }
+    if (error) return alert(error);
 
     setLoading(true);
 
@@ -70,7 +66,6 @@ export default function AddPropertyPage() {
 
       if (!user) {
         alert("Please login first");
-        setLoading(false);
         return;
       }
 
@@ -78,7 +73,6 @@ export default function AddPropertyPage() {
 
       if (form.image) {
         const fileName = `${Date.now()}-${form.image.name}`;
-
         const { error: uploadError } = await supabase.storage
           .from("property-images")
           .upload(fileName, form.image);
@@ -112,120 +106,104 @@ export default function AddPropertyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
-      {/* HEADER */}
-      <div className="bg-white border-b sticky top-0 z-20">
-        <div className="max-w-xl mx-auto px-4 py-4">
-          <h1 className="text-xl font-semibold">Add Property</h1>
-          <p className="text-sm text-gray-500">
-            Post your property on the map
+    <div className="min-h-screen bg-gray-100 pb-24">
+      {/* PREMIUM HEADER */}
+      <div className="bg-white shadow-sm sticky top-0 z-20">
+        <div className="max-w-xl mx-auto px-4 py-5">
+          <h1 className="text-2xl font-semibold">Add Property</h1>
+          <p className="text-gray-500 text-sm">
+            Post your property directly on the map
           </p>
         </div>
       </div>
 
-      <div className="max-w-xl mx-auto px-4 space-y-5 mt-5">
-        {/* TITLE */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <label className="text-sm text-gray-500">Title</label>
+      <div className="max-w-xl mx-auto px-4 space-y-5 mt-6">
+        {/* CARD */}
+        <Card label="Title">
           <input
-            className="w-full mt-1 text-lg outline-none"
             placeholder="2BHK Flat, Corner Plot..."
+            className="input"
             value={form.title}
-            onChange={(e) =>
-              setForm({ ...form, title: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
           />
-        </div>
+        </Card>
 
-        {/* PRICE */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <label className="text-sm text-gray-500">Price (₹)</label>
+        <Card label="Price (₹)">
           <input
-            className="w-full mt-1 text-lg outline-none"
-            placeholder="e.g. 2500000"
+            placeholder="2500000"
+            className="input"
             value={form.price}
-            onChange={(e) =>
-              setForm({ ...form, price: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, price: e.target.value })}
           />
-        </div>
+        </Card>
 
-        {/* LOCALITY */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <label className="text-sm text-gray-500">Locality</label>
+        <Card label="Locality">
           <input
-            className="w-full mt-1 text-lg outline-none"
             placeholder="Sector 20 Panchkula"
+            className="input"
             value={form.locality}
-            onChange={(e) =>
-              setForm({ ...form, locality: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, locality: e.target.value })}
           />
-        </div>
+        </Card>
 
-        {/* PHONE */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <label className="text-sm text-gray-500">Phone</label>
+        <Card label="Mobile Number">
           <input
             maxLength={10}
-            className="w-full mt-1 text-lg outline-none"
-            placeholder="10-digit mobile number"
+            placeholder="10-digit number"
+            className="input"
             value={form.phone}
-            onChange={(e) =>
-              setForm({ ...form, phone: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
           />
-        </div>
+        </Card>
 
         {/* IMAGE */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <label className="text-sm text-gray-500">Photo</label>
+        <Card label="Photo">
           <input
             type="file"
             accept="image/*"
-            className="mt-2"
-            onChange={(e) =>
-              handleImage(e.target.files?.[0])
-            }
+            onChange={(e) => handleImage(e.target.files?.[0])}
           />
-
           {imagePreview && (
             <img
               src={imagePreview}
               className="mt-3 rounded-xl w-full h-48 object-cover"
             />
           )}
-        </div>
+        </Card>
 
         {/* MAP */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <label className="text-sm text-gray-500">
-            Tap map to place pin
-          </label>
+        <Card label="Tap map to place pin">
+          <MapLoader>
+            <GoogleMap
+              mapContainerStyle={mapContainerStyle}
+              center={marker}
+              zoom={13}
+              onClick={handleMapClick}
+            >
+              <Marker position={marker} />
+            </GoogleMap>
+          </MapLoader>
+        </Card>
 
-          <div className="mt-3">
-            <MapLoader>
-              <GoogleMap
-                mapContainerStyle={mapContainerStyle}
-                center={marker}
-                zoom={13}
-                onClick={handleMapClick}
-              >
-                <Marker position={marker} />
-              </GoogleMap>
-            </MapLoader>
-          </div>
-        </div>
-
-        {/* SUBMIT */}
+        {/* BUTTON */}
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className="w-full bg-black text-white py-4 rounded-2xl font-semibold text-lg shadow-sm"
+          className="w-full bg-black text-white py-4 rounded-2xl font-semibold shadow-lg"
         >
           {loading ? "Posting..." : "Post Property"}
         </button>
       </div>
+    </div>
+  );
+}
+
+/* Small reusable card */
+function Card({ label, children }) {
+  return (
+    <div className="bg-white rounded-2xl p-4 shadow-sm">
+      <label className="text-sm text-gray-500">{label}</label>
+      <div className="mt-2">{children}</div>
     </div>
   );
 }
