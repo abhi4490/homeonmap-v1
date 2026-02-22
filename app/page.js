@@ -3,11 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import MapLoader from "@/components/MapLoader";
-import {
-  GoogleMap,
-  Marker,
-  InfoWindow,
-} from "@react-google-maps/api";
+import { GoogleMap, Marker, InfoWindow } from "@react-google-maps/api";
 
 const containerStyle = {
   width: "100%",
@@ -24,10 +20,10 @@ export default function HomePage() {
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
-    loadProperties();
+    fetchProperties();
   }, []);
 
-  const loadProperties = async () => {
+  const fetchProperties = async () => {
     const { data } = await supabase
       .from("properties")
       .select("*")
@@ -43,9 +39,9 @@ export default function HomePage() {
 
   return (
     <div className="relative">
-      {/* PREMIUM GLASS HEADER */}
+      {/* PREMIUM FLOATING HEADER */}
       <div className="absolute top-4 left-4 right-4 z-20 flex justify-between items-center">
-        <div className="bg-white/90 backdrop-blur px-5 py-3 rounded-2xl shadow-lg font-semibold text-lg">
+        <div className="bg-white/85 backdrop-blur-md px-5 py-3 rounded-2xl shadow-xl font-semibold text-lg">
           🏠 HomeOnMap
         </div>
 
@@ -73,7 +69,6 @@ export default function HomePage() {
           center={center}
           zoom={12}
         >
-          {/* MARKERS */}
           {properties.map((p) => (
             <Marker
               key={p.id}
@@ -88,34 +83,40 @@ export default function HomePage() {
               position={{ lat: selected.lat, lng: selected.lng }}
               onCloseClick={() => setSelected(null)}
             >
-              <div className="w-64">
+              <div className="w-60 font-sans">
+                {/* SMALL PREMIUM IMAGE */}
                 {selected.image_url && (
-                  <img
-                    src={selected.image_url}
-                    className="w-full h-32 object-cover rounded-lg mb-2"
-                  />
+                  <div className="mb-2 overflow-hidden rounded-xl">
+                    <img
+                      src={selected.image_url}
+                      className="w-full h-24 object-cover"
+                    />
+                  </div>
                 )}
 
-                <h3 className="font-semibold text-sm">
+                {/* TITLE */}
+                <h3 className="text-sm font-semibold leading-tight mb-1">
                   {selected.title}
                 </h3>
 
-                <p className="text-sm text-gray-600">
+                {/* PRICE */}
+                <p className="text-sm font-medium text-gray-800 mb-1">
                   {formatPrice(selected.price)}
                 </p>
 
+                {/* LOCALITY */}
                 {selected.locality && (
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 mb-2">
                     {selected.locality}
                   </p>
                 )}
 
-                {/* ACTION BUTTONS */}
-                <div className="flex gap-2 mt-3">
+                {/* PREMIUM BUTTON ROW */}
+                <div className="flex gap-2 mt-2">
                   {selected.phone && (
                     <a
                       href={`tel:${selected.phone}`}
-                      className="flex-1 text-center bg-black text-white py-1 rounded-lg text-sm"
+                      className="flex-1 text-center bg-black text-white py-1.5 rounded-lg text-xs font-medium"
                     >
                       Call
                     </a>
@@ -125,7 +126,7 @@ export default function HomePage() {
                     <a
                       href={`https://wa.me/91${selected.phone}`}
                       target="_blank"
-                      className="flex-1 text-center border border-black py-1 rounded-lg text-sm"
+                      className="flex-1 text-center border border-black py-1.5 rounded-lg text-xs font-medium"
                     >
                       WhatsApp
                     </a>
