@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+# Ignore large folders and zip files
+node_modules/
+.next/
+*.zip
+.env*
