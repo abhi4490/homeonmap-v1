@@ -1,13 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import {
-  GoogleMap,
-  Marker,
-  InfoWindow,
-  useJsApiLoader,
-} from "@react-google-maps/api";
+import { supabase } from "@/lib/supabase";
+import { GoogleMap, Marker } from "@react-google-maps/api";
+import Link from "next/link";
 import BuyerIntentFloating from "@/components/BuyerIntentFloating";
 
 const containerStyle = {
@@ -21,103 +17,57 @@ const center = {
 };
 
 export default function HomePage() {
-  const { isLoaded } = useJsApiLoader({
-    id: "homeonmap-map",
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
-  });
-
   const [properties, setProperties] = useState([]);
-  const [selected, setSelected] = useState(null);
 
   useEffect(() => {
     fetchProperties();
   }, []);
 
   const fetchProperties = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("properties")
-      .select("*");
+      .select("*")
+      .order("created_at", { ascending: false });
 
-    if (!error) setProperties(data || []);
+    setProperties(data || []);
   };
-
-  const formatPrice = (price) => {
-    if (!price) return "";
-    return "₹" + Number(price).toLocaleString("en-IN");
-  };
-
-  if (!isLoaded) return null;
 
   return (
-    <div className="relative">
-      {/* MAP */}
-      <GoogleMap
-        mapContainerStyle={containerStyle}
-        center={center}
-        zoom={12}
-      >
+    <div className="relative w-full h-screen">
+      {/* Top Premium Header */}
+      <div className="absolute top-4 left-4 right-4 z-20 flex justify-between items-center">
+        <div className="bg-white/90 backdrop-blur px-4 py-2 rounded-xl shadow font-semibold">
+          🏡 HomeOnMap
+        </div>
+
+        <div className="flex gap-2">
+          <Link
+            href="/add"
+            className="bg-black text-white px-4 py-2 rounded-xl shadow"
+          >
+            + Add Property
+          </Link>
+
+          <Link
+            href="/my-listings"
+            className="bg-white px-4 py-2 rounded-xl shadow border"
+          >
+            My Listings
+          </Link>
+        </div>
+      </div>
+
+      {/* Map */}
+      <GoogleMap mapContainerStyle={containerStyle} center={center} zoom={12}>
         {properties.map((p) => (
           <Marker
             key={p.id}
             position={{ lat: p.lat, lng: p.lng }}
-            onClick={() => setSelected(p)}
           />
         ))}
-
-        {selected && (
-          <InfoWindow
-            position={{ lat: selected.lat, lng: selected.lng }}
-            onCloseClick={() => setSelected(null)}
-          >
-            <div className="w-64">
-              {selected.image_url && (
-                <img
-                  src={selected.image_url}
-                  className="w-full h-32 object-cover rounded-lg mb-2"
-                />
-              )}
-
-              <h3 className="font-semibold text-sm">
-                {selected.title}
-              </h3>
-
-              <p className="text-sm text-gray-600">
-                {formatPrice(selected.price)}
-              </p>
-
-              {selected.locality && (
-                <p className="text-xs text-gray-500">
-                  {selected.locality}
-                </p>
-              )}
-
-              {/* ACTIONS */}
-              <div className="flex gap-2 mt-3">
-                {selected.phone && (
-                  <a
-                    href={`tel:${selected.phone}`}
-                    className="flex-1 text-center bg-black text-white py-1 rounded-lg text-sm"
-                  >
-                    Call
-                  </a>
-                )}
-
-                {selected.phone && (
-                  <a
-                    href={`https://wa.me/91${selected.phone}`}
-                    target="_blank"
-                    className="flex-1 text-center border border-black py-1 rounded-lg text-sm"
-                  >
-                    WhatsApp
-                  </a>
-                )}
-              </div>
-            </div>
-          </InfoWindow>
-        )}
       </GoogleMap>
 
-      {/* FLOATING BUYER POPUP */}
+      {/* Floating buyer widget */}
       <BuyerIntentFloating />
     </div>
   );
