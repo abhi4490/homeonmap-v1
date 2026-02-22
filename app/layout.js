@@ -1,5 +1,4 @@
 import "./globals.css";
-import GoogleMapProvider from "@/components/GoogleMapProvider";
 
 export const metadata = {
   title: "HomeOnMap",
@@ -9,11 +8,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
-        <GoogleMapProvider>
-          {children}
-        </GoogleMapProvider>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
