@@ -113,7 +113,7 @@ export default function HomePage() {
           </span>
         </div>
 
-        {/* Center: Hyperlocal Map Controls (Hidden on very small screens) */}
+        {/* Center: Hyperlocal Map Controls */}
         <div className="hidden lg:flex bg-gray-100/60 backdrop-blur-md p-1.5 rounded-2xl gap-1 border border-gray-200/50 shadow-inner">
           {LOCATIONS.map((loc) => (
             <button
@@ -153,10 +153,10 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* MAP */}
-      <div className="pt-[88px] h-full w-full">
+      {/* FULL SCREEN MAP */}
+      <div className="absolute inset-0 w-full h-full z-0">
         <GoogleMap
-          mapContainerStyle={{ width: "100%", height: "100%" }}
+          mapContainerStyle={mapContainerStyle}
           center={defaultCenter}
           zoom={12}
           options={{ 
