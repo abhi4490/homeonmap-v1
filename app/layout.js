@@ -1,14 +1,18 @@
-import './globals.css'
+import "./globals.css";
+import GoogleMapProvider from "@/components/GoogleMapProvider";
+
 export const metadata = {
   title: "HomeOnMap",
-  description: "Map based real estate listings",
+  description: "Map-first real estate platform",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body style={{ margin: 0, fontFamily: "Arial, sans-serif" }}>
-        {children}
+      <body>
+        <GoogleMapProvider>
+          {children}
+        </GoogleMapProvider>
       </body>
     </html>
   );
