@@ -1,21 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const mapContainerStyle = {
   width: "100%",
   height: "100vh",
 };
 
-const center = {
-  lat: 30.7333,
-  lng: 76.7794,
-};
+// Default center
+const defaultCenter = { lat: 30.7333, lng: 76.7794 };
+
+// Hyperlocal zones for quick navigation
+const LOCATIONS = [
+  { name: "Chandigarh", coords: { lat: 30.7333, lng: 76.7794 } },
+  { name: "Panchkula Ext-2", coords: { lat: 30.6500, lng: 76.8500 } },
+  { name: "Mohali", coords: { lat: 30.7046, lng: 76.7179 } },
+];
 
 export default function HomePage() {
+  const router = useRouter();
+  const mapRef = useRef(null);
+
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
@@ -23,114 +32,212 @@ export default function HomePage() {
 
   const [properties, setProperties] = useState([]);
   const [selected, setSelected] = useState(null);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     fetchProperties();
+    checkUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  const checkUser = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    setUser(session?.user || null);
+  };
 
   const fetchProperties = async () => {
     const { data } = await supabase
       .from("properties")
       .select("*")
       .order("created_at", { ascending: false });
-
     setProperties(data || []);
   };
 
+  const handleGoogleLogin = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/` },
+    });
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  };
+
+  const panToLocation = useCallback((coords) => {
+    if (mapRef.current) {
+      mapRef.current.panTo(coords);
+      mapRef.current.setZoom(14);
+    }
+  }, []);
+
+  const onLoad = useCallback(function callback(map) {
+    mapRef.current = map;
+  }, []);
+
+  const onUnmount = useCallback(function callback(map) {
+    mapRef.current = null;
+  }, []);
+
   if (!isLoaded) return (
-    <div className="flex items-center justify-center h-screen w-full bg-gray-50">
-      <div className="animate-pulse text-xl font-semibold text-gray-500">Loading Map...</div>
+    <div className="flex items-center justify-center h-screen w-full bg-[#f8fafc]">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
+        <div className="text-xl font-bold text-gray-800 tracking-tight">Loading Map...</div>
+      </div>
     </div>
   );
 
   return (
-    <div className="relative w-full h-screen overflow-hidden">
+    <div className="relative w-full h-screen overflow-hidden font-sans">
       {/* MAP */}
       <GoogleMap
         mapContainerStyle={mapContainerStyle}
-        center={center}
+        center={defaultCenter}
         zoom={12}
-        options={{ disableDefaultUI: true, zoomControl: true }}
+        options={{ 
+          disableDefaultUI: true, 
+          zoomControl: true,
+          styles: [
+            { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] } // Cleaner map
+          ]
+        }}
+        onLoad={onLoad}
+        onUnmount={onUnmount}
       >
         {properties.map((p) => (
           <Marker
             key={p.id}
             position={{ lat: p.lat, lng: p.lng }}
             onClick={() => setSelected(p)}
+            icon={{
+              url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+              scaledSize: new window.google.maps.Size(40, 40)
+            }}
           />
         ))}
       </GoogleMap>
 
-      {/* PREMIUM GLASS HEADER */}
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 w-[95%] max-w-5xl bg-white/80 backdrop-blur-md border border-white/40 rounded-2xl shadow-lg flex justify-between items-center px-6 py-4 z-10">
-        <div className="font-bold text-2xl tracking-tight text-gray-900">
-          🏠 HomeOnMap
+      {/* ULTRA-PREMIUM GLASS HEADER */}
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 w-[96%] max-w-6xl bg-white/70 backdrop-blur-xl border border-white/60 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex flex-col md:flex-row justify-between items-center px-6 py-4 z-10 gap-4 transition-all">
+        
+        {/* Branding & Trust Layer */}
+        <div className="flex flex-col">
+          <div className="font-extrabold text-2xl tracking-tight text-gray-900 flex items-center gap-2">
+            <span className="text-3xl">🏠</span> HomeOnMap
+          </div>
+          <span className="text-xs font-semibold text-gray-500 tracking-wider uppercase ml-10">
+            By Dreamkey Properties
+          </span>
         </div>
 
-        <div className="flex gap-4">
+        {/* Hyperlocal Jump Filters */}
+        <div className="hidden lg:flex bg-gray-100/80 p-1.5 rounded-2xl gap-1">
+          {LOCATIONS.map((loc) => (
+            <button
+              key={loc.name}
+              onClick={() => panToLocation(loc.coords)}
+              className="px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-white hover:shadow-sm rounded-xl transition-all duration-200"
+            >
+              {loc.name}
+            </button>
+          ))}
+        </div>
+
+        {/* Auth & Actions */}
+        <div className="flex items-center gap-3">
+          {user ? (
+            <div className="flex items-center gap-3 bg-white/50 pl-2 pr-4 py-1.5 rounded-2xl border border-gray-200/50">
+              <img src={user.user_metadata?.avatar_url || "https://www.gravatar.com/avatar/?d=mp"} alt="Profile" className="w-8 h-8 rounded-full border border-gray-200" />
+              <button onClick={handleLogout} className="text-sm font-bold text-gray-600 hover:text-red-500 transition-colors">
+                Logout
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleGoogleLogin}
+              className="text-sm font-bold text-gray-700 bg-white/80 border border-gray-200 px-5 py-2.5 rounded-xl hover:bg-gray-50 transition-all shadow-sm"
+            >
+              Sign In
+            </button>
+          )}
+
           <Link
             href="/add"
-            className="bg-black text-white px-5 py-2.5 rounded-xl font-medium shadow-md hover:bg-gray-800 hover:shadow-lg transition-all duration-200"
+            className="bg-black text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-black/20 hover:bg-gray-800 hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2"
           >
-            + Add Property
-          </Link>
-          <Link
-            href="/my-listings"
-            className="bg-white text-black border border-gray-200 px-5 py-2.5 rounded-xl font-medium shadow-sm hover:bg-gray-50 transition-all duration-200"
-          >
-            My Listings
+            <span>+</span> Post Property
           </Link>
         </div>
       </div>
 
-      {/* PREMIUM SELECTED CARD */}
+      {/* PREMIUM ZILLOW-STYLE PROPERTY CARD */}
       {selected && (
-        <div className="absolute bottom-6 left-0 right-0 flex justify-center p-4 z-10">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-gray-100 overflow-hidden animate-slideUp relative">
+        <div className="absolute bottom-6 left-0 right-0 flex justify-center p-4 z-10 pointer-events-none">
+          <div className="bg-white w-full max-w-md md:max-w-3xl rounded-3xl shadow-[0_20px_50px_rgb(0,0,0,0.15)] border border-gray-100 overflow-hidden animate-slideUp relative pointer-events-auto flex flex-col md:flex-row">
             
             {/* CLOSE BUTTON */}
             <button 
               onClick={() => setSelected(null)}
-              className="absolute top-3 right-3 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 backdrop-blur-sm transition-all z-20"
+              className="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center backdrop-blur-md transition-all z-20"
             >
               ✕
             </button>
 
-            {/* IMAGE */}
-            {selected.image_url ? (
-              <img
-                src={selected.image_url}
-                className="w-full h-72 object-cover"
-                alt={selected.title}
-              />
-            ) : (
-              <div className="w-full h-72 bg-gray-100 flex items-center justify-center text-gray-400">
-                No Image Available
-              </div>
-            )}
-
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">{selected.title}</h2>
-                  <p className="text-gray-500 font-medium mt-1">📍 {selected.locality}</p>
+            {/* IMAGE AREA */}
+            <div className="w-full md:w-2/5 relative">
+              {selected.image_url ? (
+                <img
+                  src={selected.image_url}
+                  className="w-full h-64 md:h-full object-cover"
+                  alt={selected.title}
+                />
+              ) : (
+                <div className="w-full h-64 md:h-full bg-gray-100 flex flex-col items-center justify-center text-gray-400">
+                  <span className="text-4xl mb-2">📷</span>
+                  <span className="text-sm font-medium">No Image</span>
                 </div>
-                <div className="text-2xl font-extrabold text-black bg-gray-100 px-4 py-1.5 rounded-xl">
-                  ₹ {Number(selected.price).toLocaleString("en-IN")}
+              )}
+              {/* Trust Badge */}
+              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-lg text-xs font-bold text-green-700 shadow-sm flex items-center gap-1">
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                Verified
+              </div>
+            </div>
+
+            {/* CONTENT AREA */}
+            <div className="p-6 w-full md:w-3/5 flex flex-col justify-between bg-white">
+              <div>
+                <div className="flex justify-between items-start">
+                  <h2 className="text-2xl font-extrabold text-gray-900 leading-tight pr-8">{selected.title}</h2>
+                </div>
+                <p className="text-gray-500 font-medium mt-2 flex items-center gap-1.5">
+                  <span className="text-lg">📍</span> {selected.locality}
+                </p>
+                <div className="mt-4 inline-block bg-gray-50 border border-gray-100 px-4 py-2 rounded-xl">
+                  <span className="text-2xl font-black text-black tracking-tight">
+                    ₹ {Number(selected.price).toLocaleString("en-IN")}
+                  </span>
                 </div>
               </div>
 
-              <div className="flex gap-4 mt-6">
+              <div className="flex gap-3 mt-8">
                 <a
                   href={`tel:${selected.phone}`}
-                  className="flex-1 bg-black text-white text-center py-3.5 rounded-xl font-semibold shadow-md hover:bg-gray-800 transition-all"
+                  className="flex-1 bg-gray-100 text-gray-900 text-center py-3.5 rounded-xl font-bold hover:bg-gray-200 transition-all flex justify-center items-center gap-2"
                 >
-                  📞 Call Now
+                  📞 Call
                 </a>
                 <a
                   href={`https://wa.me/91${selected.phone}`}
                   target="_blank"
-                  className="flex-1 bg-green-500 text-white text-center py-3.5 rounded-xl font-semibold shadow-md hover:bg-green-600 transition-all"
+                  className="flex-[2] bg-[#25D366] text-white text-center py-3.5 rounded-xl font-bold shadow-lg shadow-green-500/30 hover:bg-[#1ebd57] hover:-translate-y-0.5 transition-all duration-300 flex justify-center items-center gap-2"
                 >
                   💬 WhatsApp
                 </a>
@@ -142,11 +249,11 @@ export default function HomePage() {
 
       <style jsx>{`
         .animate-slideUp {
-          animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+          animation: slideUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
         @keyframes slideUp {
-          from { transform: translateY(120%); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
+          from { transform: translateY(100%) scale(0.95); opacity: 0; }
+          to { transform: translateY(0) scale(1); opacity: 1; }
         }
       `}</style>
     </div>
