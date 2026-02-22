@@ -177,14 +177,14 @@ export default function HomePage() {
               onClick={() => setSelected(p)}
               icon={{
                 url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
-                scaledSize: new window.google?.maps?.Size(40, 40)
+                scaledSize: new window.google.maps.Size(40, 40)
               }}
             />
           ))}
         </GoogleMap>
       </div>
 
-      {/* PREMIUM ZILLOW-STYLE PROPERTY CARD (Pops up from bottom when pin is clicked) */}
+      {/* PREMIUM ZILLOW-STYLE PROPERTY CARD */}
       {selected && (
         <div className="absolute bottom-6 left-0 right-0 flex justify-center p-4 z-40 pointer-events-none">
           <div className="bg-white w-full max-w-md md:max-w-3xl rounded-3xl shadow-[0_20px_50px_rgb(0,0,0,0.2)] border border-gray-100 overflow-hidden animate-slideUp relative pointer-events-auto flex flex-col md:flex-row">
