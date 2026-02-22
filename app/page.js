@@ -2,18 +2,24 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import MapLoader from "@/components/MapLoader";
-import { GoogleMap, Marker, InfoWindow } from "@react-google-maps/api";
+import { GoogleMap, Marker } from "@react-google-maps/api";
+import Link from "next/link";
 
-const containerStyle = {
+const mapStyle = {
   width: "100%",
   height: "100vh",
 };
 
-const center = {
-  lat: 30.7333,
-  lng: 76.7794,
-};
+const defaultCenter = { lat: 30.7333, lng: 76.7794 };
+
+// 💰 Price formatter
+function formatPrice(price) {
+  if (!price) return "";
+  const num = Number(price);
+  if (num >= 10000000) return `₹${(num / 10000000).toFixed(2)} Cr`;
+  if (num >= 100000) return `₹${(num / 100000).toFixed(1)} L`;
+  return `₹${num.toLocaleString("en-IN")}`;
+}
 
 export default function HomePage() {
   const [properties, setProperties] = useState([]);
@@ -23,120 +29,103 @@ export default function HomePage() {
     fetchProperties();
   }, []);
 
-  const fetchProperties = async () => {
+  async function fetchProperties() {
     const { data } = await supabase
       .from("properties")
       .select("*")
+      .eq("is_deleted", false)
       .order("created_at", { ascending: false });
 
-    setProperties(data || []);
-  };
-
-  const formatPrice = (price) => {
-    if (!price) return "";
-    return "₹" + Number(price).toLocaleString("en-IN");
-  };
+    if (data) setProperties(data);
+  }
 
   return (
-    <div className="relative">
-      {/* PREMIUM FLOATING HEADER */}
-      <div className="absolute top-4 left-4 right-4 z-20 flex justify-between items-center">
-        <div className="bg-white/85 backdrop-blur-md px-5 py-3 rounded-2xl shadow-xl font-semibold text-lg">
-          🏠 HomeOnMap
-        </div>
+    <div className="relative h-screen w-full bg-gray-100">
+      {/* 🧊 PREMIUM HEADER */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 w-[92%] max-w-xl">
+        <div className="bg-white/80 backdrop-blur shadow-lg rounded-2xl px-4 py-3 flex items-center justify-between">
+          <div className="font-bold text-lg">🏠 HomeOnMap</div>
 
-        <div className="flex gap-3">
-          <a
-            href="/add"
-            className="bg-black text-white px-5 py-3 rounded-2xl shadow-lg font-semibold"
-          >
-            + Add Property
-          </a>
+          <div className="flex gap-2 text-sm">
+            <Link
+              href="/add"
+              className="bg-black text-white px-3 py-1.5 rounded-lg font-medium"
+            >
+              + Add
+            </Link>
 
-          <a
-            href="/my-listings"
-            className="bg-white px-5 py-3 rounded-2xl shadow-lg font-semibold"
-          >
-            My Listings
-          </a>
+            <Link
+              href="/my-listings"
+              className="border px-3 py-1.5 rounded-lg font-medium"
+            >
+              My Listings
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* MAP */}
-      <MapLoader>
-        <GoogleMap
-          mapContainerStyle={containerStyle}
-          center={center}
-          zoom={12}
-        >
-          {properties.map((p) => (
-            <Marker
-              key={p.id}
-              position={{ lat: p.lat, lng: p.lng }}
-              onClick={() => setSelected(p)}
-            />
-          ))}
+      {/* 🗺 MAP */}
+      <GoogleMap
+        mapContainerStyle={mapStyle}
+        center={defaultCenter}
+        zoom={12}
+      >
+        {properties.map((p) => (
+          <Marker
+            key={p.id}
+            position={{ lat: p.lat, lng: p.lng }}
+            onClick={() => setSelected(p)}
+          />
+        ))}
+      </GoogleMap>
 
-          {/* PREMIUM PROPERTY CARD */}
-          {selected && (
-            <InfoWindow
-              position={{ lat: selected.lat, lng: selected.lng }}
-              onCloseClick={() => setSelected(null)}
-            >
-              <div className="w-60 font-sans">
-                {/* SMALL PREMIUM IMAGE */}
-                {selected.image_url && (
-                  <div className="mb-2 overflow-hidden rounded-xl">
-                    <img
-                      src={selected.image_url}
-                      className="w-full h-24 object-cover"
-                    />
-                  </div>
-                )}
+      {/* 💎 PREMIUM PROPERTY CARD */}
+      {selected && (
+        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-20">
+          <div className="bg-white rounded-2xl shadow-2xl overflow-hidden animate-[fadeIn_.25s_ease]">
+            {/* IMAGE */}
+            {selected.image_url && (
+              <img
+                src={selected.image_url}
+                className="w-full h-44 object-cover"
+              />
+            )}
 
-                {/* TITLE */}
-                <h3 className="text-sm font-semibold leading-tight mb-1">
-                  {selected.title}
-                </h3>
-
-                {/* PRICE */}
-                <p className="text-sm font-medium text-gray-800 mb-1">
-                  {formatPrice(selected.price)}
-                </p>
-
-                {/* LOCALITY */}
-                {selected.locality && (
-                  <p className="text-xs text-gray-500 mb-2">
-                    {selected.locality}
-                  </p>
-                )}
-
-                {/* PREMIUM BUTTON ROW */}
-                <div className="flex gap-2 mt-2">
-                  {selected.phone && (
-                    <a
-                      href={`tel:${selected.phone}`}
-                      className="flex-1 text-center bg-black text-white py-1.5 rounded-lg text-xs font-medium"
-                    >
-                      Call
-                    </a>
-                  )}
-
-                  {selected.phone && (
-                    <a
-                      href={`https://wa.me/91${selected.phone}`}
-                      target="_blank"
-                      className="flex-1 text-center border border-black py-1.5 rounded-lg text-xs font-medium"
-                    >
-                      WhatsApp
-                    </a>
-                  )}
-                </div>
+            {/* CONTENT */}
+            <div className="p-4 space-y-2">
+              <div className="text-lg font-semibold leading-tight">
+                {selected.title}
               </div>
-            </InfoWindow>
-          )}
-        </GoogleMap>
-      </MapLoader>
+
+              <div className="text-black font-bold text-xl">
+                {formatPrice(selected.price)}
+              </div>
+
+              <div className="text-gray-500 text-sm">
+                {selected.locality}
+              </div>
+
+              {/* ACTIONS */}
+              <div className="flex gap-2 mt-3">
+                <a
+                  href={`tel:${selected.phone}`}
+                  className="flex-1 bg-black text-white text-center py-2 rounded-lg text-sm font-medium"
+                >
+                  Call
+                </a>
+
+                <a
+                  href={`https://wa.me/91${selected.phone}`}
+                  target="_blank"
+                  className="flex-1 bg-green-500 text-white text-center py-2 rounded-lg text-sm font-medium"
+                >
+                  WhatsApp
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
