@@ -16,17 +16,24 @@ const center = {
 export default function HomePage() {
   return (
     <div className="relative">
-      {/* Header */}
+      {/* PREMIUM HEADER */}
       <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-center">
-        <div className="bg-white px-4 py-2 rounded-xl shadow font-semibold">
+        <div className="bg-white/90 backdrop-blur px-4 py-3 rounded-2xl shadow-lg font-semibold text-lg">
           🏠 HomeOnMap
         </div>
 
-        <div className="flex gap-2">
-          <a href="/add" className="bg-black text-white px-4 py-2 rounded-xl">
+        <div className="flex gap-3">
+          <a
+            href="/add"
+            className="bg-black text-white px-4 py-3 rounded-2xl shadow-lg font-semibold"
+          >
             + Add Property
           </a>
-          <a href="/my-listings" className="bg-white px-4 py-2 rounded-xl shadow">
+
+          <a
+            href="/my-listings"
+            className="bg-white px-4 py-3 rounded-2xl shadow-lg font-semibold"
+          >
             My Listings
           </a>
         </div>
