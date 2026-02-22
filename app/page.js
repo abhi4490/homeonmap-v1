@@ -11,12 +11,12 @@ const mapContainerStyle = {
   height: "100vh",
 };
 
-// Default center
+// Default center (Chandigarh general area)
 const defaultCenter = { lat: 30.7333, lng: 76.7794 };
 
-// Hyperlocal zones for the header
+// Updated Hyperlocal zones for the header
 const LOCATIONS = [
-  { name: "Chandigarh", coords: { lat: 30.7333, lng: 76.7794 } },
+  { name: "Zirakpur", coords: { lat: 30.6425, lng: 76.8173 } },
   { name: "Panchkula Ext-2", coords: { lat: 30.6500, lng: 76.8500 } },
   { name: "Mohali", coords: { lat: 30.7046, lng: 76.7179 } },
 ];
@@ -108,9 +108,6 @@ export default function HomePage() {
           <div className="font-extrabold text-2xl tracking-tight text-gray-900 flex items-center gap-2">
             <span className="text-3xl drop-shadow-sm">🏠</span> HomeOnMap
           </div>
-          <span className="text-[0.65rem] font-bold text-gray-500 tracking-widest uppercase ml-10">
-            By Dreamkey Properties
-          </span>
         </div>
 
         {/* Center: Hyperlocal Map Controls */}
