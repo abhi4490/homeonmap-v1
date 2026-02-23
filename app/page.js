@@ -14,7 +14,7 @@ const mapContainerStyle = {
 // Default center
 const defaultCenter = { lat: 30.7333, lng: 76.7794 };
 
-// GUARANTEED UPDATED LOCATIONS: Panchkula added, Ext-2 coordinates fixed
+// GUARANTEED UPDATED LOCATIONS
 const LOCATIONS = [
   { name: "Zirakpur", coords: { lat: 30.6425, lng: 76.8173 } },
   { name: "Panchkula", coords: { lat: 30.6942, lng: 76.8606 } },
@@ -98,22 +98,14 @@ export default function HomePage() {
   return (
     <div className="relative w-full h-screen overflow-hidden font-sans">
       
-      {/* =========================================
-        MOBILE-OPTIMIZED PREMIUM HEADER
-        =========================================
-      */}
+      {/* HEADER */}
       <header className="absolute top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-2xl border-b border-white/50 shadow-[0_4px_30px_rgb(0,0,0,0.05)] px-3 sm:px-8 py-3 flex flex-col gap-3 transition-all">
-        
-        {/* Top Row: Branding, Auth, and Post Button */}
         <div className="flex justify-between items-center w-full">
-          
-          {/* Logo */}
           <div className="font-extrabold text-lg sm:text-2xl tracking-tight text-gray-900 flex items-center gap-1 sm:gap-2">
             <span className="text-2xl sm:text-3xl drop-shadow-sm">🏠</span> 
             <span className="hidden min-[380px]:block">HomeOnMap</span>
           </div>
 
-          {/* Auth & Actions */}
           <div className="flex items-center gap-2 sm:gap-4">
             {user ? (
               <div className="flex items-center gap-2 sm:gap-3 bg-white/60 pl-3 pr-2 sm:pr-4 py-1.5 rounded-full border border-gray-200 shadow-sm">
@@ -152,7 +144,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Bottom Row: Hyperlocal Map Controls */}
         <div className="flex w-full overflow-x-auto gap-2 pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {LOCATIONS.map((loc) => (
             <button
@@ -164,7 +155,6 @@ export default function HomePage() {
             </button>
           ))}
         </div>
-
       </header>
 
       {/* FULL SCREEN MAP */}
@@ -190,7 +180,10 @@ export default function HomePage() {
               position={{ lat: p.lat, lng: p.lng }}
               onClick={() => setSelected(p)}
               icon={{
-                url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+                // Color Logic: Blue for dealer, Red for owner
+                url: p.role === "dealer" 
+                  ? "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" 
+                  : "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
                 scaledSize: new window.google.maps.Size(40, 40)
               }}
             />
@@ -198,7 +191,7 @@ export default function HomePage() {
         </GoogleMap>
       </div>
 
-      {/* PREMIUM ZILLOW-STYLE PROPERTY CARD */}
+      {/* PROPERTY CARD */}
       {selected && (
         <div className="absolute bottom-6 left-0 right-0 flex justify-center p-4 z-40 pointer-events-none">
           <div className="bg-white w-full max-w-md md:max-w-3xl rounded-3xl shadow-[0_20px_50px_rgb(0,0,0,0.2)] border border-gray-100 overflow-hidden animate-slideUp relative pointer-events-auto flex flex-col md:flex-row">
@@ -219,6 +212,7 @@ export default function HomePage() {
                   <span className="text-sm font-medium">No Image</span>
                 </div>
               )}
+              {/* Image Verified Badge */}
               <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-lg text-xs font-black text-green-700 shadow-sm flex items-center gap-1.5 uppercase tracking-wide">
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                 Verified
@@ -231,10 +225,22 @@ export default function HomePage() {
                 <p className="text-gray-500 font-bold mt-1 sm:mt-2 flex items-center gap-1.5 text-sm sm:text-base">
                   <span className="text-lg">📍</span> {selected.locality}
                 </p>
-                <div className="mt-3 sm:mt-5 inline-block bg-gray-50 border border-gray-200 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl">
-                  <span className="text-xl sm:text-2xl font-black text-black tracking-tight">
-                    ₹ {Number(selected.price).toLocaleString("en-IN")}
-                  </span>
+                
+                <div className="flex items-center gap-3 mt-3 sm:mt-4">
+                  <div className="inline-block bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-xl">
+                    <span className="text-xl sm:text-2xl font-black text-black tracking-tight">
+                      ₹ {Number(selected.price).toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                  
+                  {/* ROLE BADGE (Owner vs Dealer) */}
+                  <div className={`px-2.5 py-1 rounded-lg text-xs sm:text-sm font-black uppercase tracking-wide border ${
+                    selected.role === 'dealer' 
+                      ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                      : 'bg-red-50 text-red-700 border-red-200'
+                  }`}>
+                    {selected.role === 'dealer' ? '🏢 Dealer' : '👤 Owner'}
+                  </div>
                 </div>
               </div>
 

@@ -14,7 +14,7 @@ const containerStyle = {
 // Default center
 const defaultCenter = { lat: 30.7333, lng: 76.7794 };
 
-// Aligned Quick Location Buttons: Added Panchkula before Ext-2
+// Aligned Quick Location Buttons
 const QUICK_LOCATIONS = [
   { name: "Zirakpur", coords: { lat: 30.6425, lng: 76.8173 } },
   { name: "Panchkula", coords: { lat: 30.6942, lng: 76.8606 } },
@@ -30,7 +30,7 @@ export default function AddProperty() {
   const [user, setUser] = useState(null);
   const [authChecking, setAuthChecking] = useState(true);
   
-  // Form states
+  // Form states (Added 'role' with default 'owner')
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [marker, setMarker] = useState(defaultCenter);
   const [form, setForm] = useState({
@@ -39,6 +39,7 @@ export default function AddProperty() {
     locality: "",
     phone: "",
     image: null,
+    role: "owner", 
   });
 
   const { isLoaded } = useJsApiLoader({
@@ -68,7 +69,6 @@ export default function AddProperty() {
     });
   };
 
-  // Map Loaded Reference
   const onLoad = useCallback(function callback(map) {
     mapRef.current = map;
   }, []);
@@ -77,7 +77,6 @@ export default function AddProperty() {
     mapRef.current = null;
   }, []);
 
-  // SMART UX: Handle Quick Location Clicks (Pan Map & Drop Pin ONLY)
   const handleQuickLocation = (loc) => {
     setMarker(loc.coords);
     if (mapRef.current) {
@@ -86,7 +85,6 @@ export default function AddProperty() {
     }
   };
 
-  // SMART PRICE UX
   const getPriceHint = (val) => {
     if (!val || isNaN(val)) return null;
     const num = Number(val);
@@ -117,6 +115,7 @@ export default function AddProperty() {
         imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/property-images/${fileName}`;
       }
 
+      // Added role to the insert function
       const { error: insertError } = await supabase.from("properties").insert({
         title: form.title,
         price: Number(form.price),
@@ -126,6 +125,7 @@ export default function AddProperty() {
         lng: marker.lng,
         image_url: imageUrl,
         user_id: user.id,
+        role: form.role, 
       });
 
       if (insertError) throw insertError;
@@ -139,7 +139,6 @@ export default function AddProperty() {
     }
   };
 
-  // 1. LOADING STATE
   if (authChecking) {
     return (
       <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
@@ -148,7 +147,6 @@ export default function AddProperty() {
     );
   }
 
-  // 2. GLASSMORPHIC LOGIN SCREEN
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200">
@@ -172,7 +170,6 @@ export default function AddProperty() {
     );
   }
 
-  // 3. ULTRA-PREMIUM ADD PROPERTY FORM
   return (
     <div className="min-h-screen py-12 px-4 relative overflow-hidden bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 font-sans">
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
@@ -193,6 +190,25 @@ export default function AddProperty() {
         </div>
 
         <div className="space-y-6">
+          
+          {/* ROLE SELECTOR: Owner vs Dealer */}
+          <div className="flex bg-gray-100/50 p-1.5 rounded-2xl w-full sm:w-fit border border-gray-200/60 shadow-inner">
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, role: "owner" })}
+              className={`flex-1 sm:px-8 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 ${form.role === "owner" ? "bg-white text-red-600 shadow-sm border border-gray-200" : "text-gray-500 hover:text-gray-800"}`}
+            >
+              👤 I am Owner
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, role: "dealer" })}
+              className={`flex-1 sm:px-8 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 ${form.role === "dealer" ? "bg-white text-blue-600 shadow-sm border border-gray-200" : "text-gray-500 hover:text-gray-800"}`}
+            >
+              🏢 I am Dealer
+            </button>
+          </div>
+
           {/* TITLE */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Property Title</label>
@@ -267,7 +283,6 @@ export default function AddProperty() {
               <span className="text-xs font-semibold text-gray-400 bg-white/50 px-2 py-1 rounded-md hidden sm:block">Click map to move pin</span>
             </div>
 
-            {/* QUICK LOCATION BUTTONS (Scrollable on mobile) */}
             <div className="flex overflow-x-auto gap-2 mb-4 pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {QUICK_LOCATIONS.map((loc) => (
                 <button
@@ -298,7 +313,15 @@ export default function AddProperty() {
                       })
                     }
                   >
-                    <Marker position={marker} />
+                    <Marker 
+                      position={marker} 
+                      icon={{
+                        url: form.role === "dealer" 
+                          ? "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" 
+                          : "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
+                        scaledSize: new window.google.maps.Size(40, 40)
+                      }}
+                    />
                   </GoogleMap>
                 </div>
               ) : (
