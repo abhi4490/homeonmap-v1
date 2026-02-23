@@ -190,18 +190,15 @@ export default function HomePage() {
         </GoogleMap>
       </div>
 
-      {/* DIRECT WHATSAPP FLOATING BUTTON (Hides when a property is selected) */}
+      {/* DIRECT WHATSAPP FLOATING BUTTON (Standard WhatsApp Size) */}
       {!selected && (
         <a
           href="https://wa.me/918501000700?text=Hello%20HomeOnMap,%20I%20have%20an%20inquiry%20about%20partnerships%20or%20listings."
           target="_blank"
           rel="noopener noreferrer"
-          className="absolute bottom-8 right-6 md:bottom-10 md:right-10 z-40 bg-[#25D366] text-white p-4 rounded-full shadow-[0_10px_30px_rgba(37,211,102,0.4)] hover:bg-[#1ebd57] hover:scale-110 transition-all duration-300 flex items-center justify-center group"
+          className="absolute bottom-6 right-4 md:bottom-8 md:right-8 z-40 bg-[#25D366] text-white w-14 h-14 rounded-full shadow-[0_4px_12px_rgba(37,211,102,0.4)] hover:bg-[#1ebd57] hover:scale-110 transition-transform duration-300 flex items-center justify-center"
         >
-          <span className="text-3xl leading-none drop-shadow-sm">💬</span>
-          <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs group-hover:ml-3 font-bold transition-all duration-300 ease-in-out hidden sm:block">
-            Contact Support
-          </span>
+          <span className="text-3xl leading-none drop-shadow-sm mt-0.5">💬</span>
         </a>
       )}
 
