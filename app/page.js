@@ -14,10 +14,11 @@ const mapContainerStyle = {
 // Default center
 const defaultCenter = { lat: 30.7333, lng: 76.7794 };
 
-// Hyperlocal zones for the header
+// GUARANTEED UPDATED LOCATIONS: Panchkula added, Ext-2 coordinates fixed
 const LOCATIONS = [
   { name: "Zirakpur", coords: { lat: 30.6425, lng: 76.8173 } },
-  { name: "Panchkula Ext-2", coords: { lat: 30.6500, lng: 76.8500 } },
+  { name: "Panchkula", coords: { lat: 30.6942, lng: 76.8606 } },
+  { name: "Panchkula Ext-2", coords: { lat: 30.622143, lng: 76.938349 } },
   { name: "Mohali", coords: { lat: 30.7046, lng: 76.7179 } },
 ];
 
@@ -127,7 +128,6 @@ export default function HomePage() {
                   onClick={handleLogout}
                   title="Click to Logout"
                 />
-                {/* Hide text 'Logout' on mobile to save space, avatar is clickable */}
                 <button onClick={handleLogout} className="hidden md:block text-xs font-bold text-gray-500 hover:text-red-500 transition-colors uppercase tracking-wide">
                   Logout
                 </button>
@@ -152,13 +152,13 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Bottom Row: Hyperlocal Map Controls (Swipeable on Mobile) */}
+        {/* Bottom Row: Hyperlocal Map Controls */}
         <div className="flex w-full overflow-x-auto gap-2 pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {LOCATIONS.map((loc) => (
             <button
               key={loc.name}
               onClick={() => panToLocation(loc.coords)}
-              className="whitespace-nowrap px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-bold text-gray-600 bg-gray-100/60 backdrop-blur-md border border-gray-200/50 hover:text-black hover:bg-white hover:shadow-sm rounded-xl transition-all duration-300"
+              className="whitespace-nowrap px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-bold text-gray-600 bg-white/80 backdrop-blur-md border border-gray-200/80 hover:text-black hover:bg-gray-100 hover:shadow-sm rounded-xl transition-all duration-300 shadow-sm"
             >
               {loc.name}
             </button>
