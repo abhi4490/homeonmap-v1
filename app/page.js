@@ -11,10 +11,10 @@ const mapContainerStyle = {
   height: "100vh",
 };
 
-// Default center (Chandigarh general area)
+// Default center
 const defaultCenter = { lat: 30.7333, lng: 76.7794 };
 
-// Updated Hyperlocal zones for the header
+// Hyperlocal zones for the header
 const LOCATIONS = [
   { name: "Zirakpur", coords: { lat: 30.6425, lng: 76.8173 } },
   { name: "Panchkula Ext-2", coords: { lat: 30.6500, lng: 76.8500 } },
@@ -98,60 +98,73 @@ export default function HomePage() {
     <div className="relative w-full h-screen overflow-hidden font-sans">
       
       {/* =========================================
-        TRUE PREMIUM HEADER (Fixed to Top)
+        MOBILE-OPTIMIZED PREMIUM HEADER
         =========================================
       */}
-      <header className="absolute top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-2xl border-b border-white/50 shadow-[0_4px_30px_rgb(0,0,0,0.05)] px-4 sm:px-8 py-4 flex justify-between items-center transition-all">
+      <header className="absolute top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-2xl border-b border-white/50 shadow-[0_4px_30px_rgb(0,0,0,0.05)] px-3 sm:px-8 py-3 flex flex-col gap-3 transition-all">
         
-        {/* Left: Branding */}
-        <div className="flex flex-col">
-          <div className="font-extrabold text-2xl tracking-tight text-gray-900 flex items-center gap-2">
-            <span className="text-3xl drop-shadow-sm">🏠</span> HomeOnMap
+        {/* Top Row: Branding, Auth, and Post Button */}
+        <div className="flex justify-between items-center w-full">
+          
+          {/* Logo */}
+          <div className="font-extrabold text-lg sm:text-2xl tracking-tight text-gray-900 flex items-center gap-1 sm:gap-2">
+            <span className="text-2xl sm:text-3xl drop-shadow-sm">🏠</span> 
+            <span className="hidden min-[380px]:block">HomeOnMap</span>
+          </div>
+
+          {/* Auth & Actions */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            {user ? (
+              <div className="flex items-center gap-2 sm:gap-3 bg-white/60 pl-3 pr-2 sm:pr-4 py-1.5 rounded-full border border-gray-200 shadow-sm">
+                <Link href="/my-listings" className="text-[10px] sm:text-xs font-extrabold text-gray-700 hover:text-black uppercase tracking-wide">
+                  Portfolio
+                </Link>
+                <div className="w-px h-4 bg-gray-300 mx-0.5 sm:mx-1"></div>
+                <img 
+                  src={user.user_metadata?.avatar_url || "https://www.gravatar.com/avatar/?d=mp"} 
+                  alt="Profile" 
+                  className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border border-gray-100 shadow-sm cursor-pointer" 
+                  onClick={handleLogout}
+                  title="Click to Logout"
+                />
+                {/* Hide text 'Logout' on mobile to save space, avatar is clickable */}
+                <button onClick={handleLogout} className="hidden md:block text-xs font-bold text-gray-500 hover:text-red-500 transition-colors uppercase tracking-wide">
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleGoogleLogin}
+                className="text-xs sm:text-sm font-bold text-gray-700 bg-white/80 border border-gray-200 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl hover:bg-gray-50 transition-all shadow-sm"
+              >
+                Sign In
+              </button>
+            )}
+
+            <Link
+              href="/add"
+              className="bg-black text-white px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-bold shadow-lg shadow-black/20 hover:bg-gray-800 transition-all duration-300 flex items-center gap-1 sm:gap-2"
+            >
+              <span className="text-base sm:text-lg leading-none">+</span> 
+              <span className="hidden sm:block">Post Property</span>
+              <span className="block sm:hidden text-xs">Post</span>
+            </Link>
           </div>
         </div>
 
-        {/* Center: Hyperlocal Map Controls */}
-        <div className="hidden lg:flex bg-gray-100/60 backdrop-blur-md p-1.5 rounded-2xl gap-1 border border-gray-200/50 shadow-inner">
+        {/* Bottom Row: Hyperlocal Map Controls (Swipeable on Mobile) */}
+        <div className="flex w-full overflow-x-auto gap-2 pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {LOCATIONS.map((loc) => (
             <button
               key={loc.name}
               onClick={() => panToLocation(loc.coords)}
-              className="px-5 py-2 text-sm font-bold text-gray-600 hover:text-black hover:bg-white hover:shadow-sm rounded-xl transition-all duration-300"
+              className="whitespace-nowrap px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-bold text-gray-600 bg-gray-100/60 backdrop-blur-md border border-gray-200/50 hover:text-black hover:bg-white hover:shadow-sm rounded-xl transition-all duration-300"
             >
               {loc.name}
             </button>
           ))}
         </div>
 
-        {/* Right: Auth & Actions */}
-        <div className="flex items-center gap-4">
-          {user ? (
-            <div className="hidden sm:flex items-center gap-3 bg-white/60 pl-4 pr-4 py-1.5 rounded-full border border-gray-200 shadow-sm">
-              <Link href="/my-listings" className="text-xs font-extrabold text-gray-700 hover:text-black transition-colors uppercase tracking-wide">
-                My Portfolio
-              </Link>
-              <div className="w-px h-4 bg-gray-300 mx-1"></div>
-              <img src={user.user_metadata?.avatar_url || "https://www.gravatar.com/avatar/?d=mp"} alt="Profile" className="w-8 h-8 rounded-full border border-gray-100 shadow-sm" />
-              <button onClick={handleLogout} className="text-xs font-bold text-gray-500 hover:text-red-500 transition-colors uppercase tracking-wide">
-                Logout
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={handleGoogleLogin}
-              className="hidden sm:block text-sm font-bold text-gray-700 bg-white/80 border border-gray-200 px-5 py-2.5 rounded-xl hover:bg-gray-50 transition-all shadow-sm"
-            >
-              Sign In
-            </button>
-          )}
-
-          <Link
-            href="/add"
-            className="bg-black text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-black/20 hover:bg-gray-800 hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2"
-          >
-            <span className="text-lg leading-none">+</span> Post Property
-          </Link>
-        </div>
       </header>
 
       {/* FULL SCREEN MAP */}
@@ -199,9 +212,9 @@ export default function HomePage() {
 
             <div className="w-full md:w-2/5 relative">
               {selected.image_url ? (
-                <img src={selected.image_url} className="w-full h-64 md:h-full object-cover" alt={selected.title} />
+                <img src={selected.image_url} className="w-full h-48 sm:h-64 md:h-full object-cover" alt={selected.title} />
               ) : (
-                <div className="w-full h-64 md:h-full bg-gray-50 flex flex-col items-center justify-center text-gray-400">
+                <div className="w-full h-48 sm:h-64 md:h-full bg-gray-50 flex flex-col items-center justify-center text-gray-400">
                   <span className="text-4xl mb-2">📷</span>
                   <span className="text-sm font-medium">No Image</span>
                 </div>
@@ -212,24 +225,24 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="p-6 w-full md:w-3/5 flex flex-col justify-between bg-white">
+            <div className="p-5 sm:p-6 w-full md:w-3/5 flex flex-col justify-between bg-white">
               <div>
-                <h2 className="text-2xl font-black text-gray-900 leading-tight pr-8">{selected.title}</h2>
-                <p className="text-gray-500 font-bold mt-2 flex items-center gap-1.5">
+                <h2 className="text-xl sm:text-2xl font-black text-gray-900 leading-tight pr-8">{selected.title}</h2>
+                <p className="text-gray-500 font-bold mt-1 sm:mt-2 flex items-center gap-1.5 text-sm sm:text-base">
                   <span className="text-lg">📍</span> {selected.locality}
                 </p>
-                <div className="mt-5 inline-block bg-gray-50 border border-gray-200 px-4 py-2 rounded-xl">
-                  <span className="text-2xl font-black text-black tracking-tight">
+                <div className="mt-3 sm:mt-5 inline-block bg-gray-50 border border-gray-200 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl">
+                  <span className="text-xl sm:text-2xl font-black text-black tracking-tight">
                     ₹ {Number(selected.price).toLocaleString("en-IN")}
                   </span>
                 </div>
               </div>
 
-              <div className="flex gap-3 mt-8">
-                <a href={`tel:${selected.phone}`} className="flex-1 bg-gray-100 text-gray-900 text-center py-4 rounded-xl font-bold hover:bg-gray-200 transition-all flex justify-center items-center gap-2">
+              <div className="flex gap-2 sm:gap-3 mt-5 sm:mt-8">
+                <a href={`tel:${selected.phone}`} className="flex-1 bg-gray-100 text-gray-900 text-center py-3 sm:py-4 rounded-xl font-bold hover:bg-gray-200 transition-all flex justify-center items-center gap-1 sm:gap-2 text-sm sm:text-base">
                   📞 Call
                 </a>
-                <a href={`https://wa.me/91${selected.phone}`} target="_blank" className="flex-[2] bg-[#25D366] text-white text-center py-4 rounded-xl font-bold shadow-lg shadow-green-500/30 hover:bg-[#1ebd57] transition-all flex justify-center items-center gap-2">
+                <a href={`https://wa.me/91${selected.phone}`} target="_blank" className="flex-[2] bg-[#25D366] text-white text-center py-3 sm:py-4 rounded-xl font-bold shadow-lg shadow-green-500/30 hover:bg-[#1ebd57] transition-all flex justify-center items-center gap-1 sm:gap-2 text-sm sm:text-base">
                   💬 WhatsApp
                 </a>
               </div>
