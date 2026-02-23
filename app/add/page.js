@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
@@ -11,10 +11,20 @@ const containerStyle = {
   borderRadius: "1rem",
 };
 
-const center = { lat: 30.7333, lng: 76.7794 }; // Defaults to Chandigarh area
+// Default center (Chandigarh)
+const defaultCenter = { lat: 30.7333, lng: 76.7794 };
+
+// Quick Location Buttons Data (Coordinates updated to get you close, no text auto-fill)
+const QUICK_LOCATIONS = [
+  { name: "Zirakpur", coords: { lat: 30.6425, lng: 76.8173 } },
+  { name: "Panchkula", coords: { lat: 30.6942, lng: 76.8606 } },
+  { name: "Mohali", coords: { lat: 30.7046, lng: 76.7179 } },
+  { name: "Panchkula Ext-2", coords: { lat: 30.6500, lng: 76.8500 } }, // Drops pin near Sunlit Urbana area
+];
 
 export default function AddProperty() {
   const router = useRouter();
+  const mapRef = useRef(null);
   
   // Auth states
   const [user, setUser] = useState(null);
@@ -22,7 +32,7 @@ export default function AddProperty() {
   
   // Form states
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [marker, setMarker] = useState(center);
+  const [marker, setMarker] = useState(defaultCenter);
   const [form, setForm] = useState({
     title: "",
     price: "",
@@ -56,6 +66,26 @@ export default function AddProperty() {
       provider: "google",
       options: { redirectTo: `${window.location.origin}/add` },
     });
+  };
+
+  // Map Loaded Reference
+  const onLoad = useCallback(function callback(map) {
+    mapRef.current = map;
+  }, []);
+
+  const onUnmount = useCallback(function callback(map) {
+    mapRef.current = null;
+  }, []);
+
+  // SMART UX: Handle Quick Location Clicks (Pan Map & Drop Pin ONLY)
+  const handleQuickLocation = (loc) => {
+    // 1. Drop the pin
+    setMarker(loc.coords);
+    // 2. Pan map and zoom in closer so user can manually adjust
+    if (mapRef.current) {
+      mapRef.current.panTo(loc.coords);
+      mapRef.current.setZoom(15);
+    }
   };
 
   // SMART PRICE UX: Calculates Lakhs and Crores dynamically
@@ -92,7 +122,7 @@ export default function AddProperty() {
       const { error: insertError } = await supabase.from("properties").insert({
         title: form.title,
         price: Number(form.price),
-        locality: form.locality,
+        locality: form.locality, // Leaves this exactly as the user typed it
         phone: form.phone,
         lat: marker.lat,
         lng: marker.lng,
@@ -124,7 +154,6 @@ export default function AddProperty() {
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200">
-        {/* Decorative background blobs */}
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-200/40 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
         <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-purple-200/40 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
 
@@ -148,20 +177,19 @@ export default function AddProperty() {
   // 3. ULTRA-PREMIUM ADD PROPERTY FORM
   return (
     <div className="min-h-screen py-12 px-4 relative overflow-hidden bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 font-sans">
-      {/* Decorative background blobs */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-100/50 rounded-full mix-blend-multiply filter blur-[100px]"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-100/50 rounded-full mix-blend-multiply filter blur-[100px]"></div>
       </div>
 
-      <div className="max-w-4xl mx-auto bg-white/60 backdrop-blur-2xl p-8 sm:p-12 rounded-[2.5rem] shadow-[0_8px_40px_rgb(0,0,0,0.06)] border border-white/80 space-y-8 relative z-10">
+      <div className="max-w-4xl mx-auto bg-white/60 backdrop-blur-2xl p-6 sm:p-12 rounded-[2.5rem] shadow-[0_8px_40px_rgb(0,0,0,0.06)] border border-white/80 space-y-8 relative z-10">
         
         <div className="flex justify-between items-end border-b border-gray-200/50 pb-6">
           <div>
-            <h1 className="text-4xl font-black text-gray-900 tracking-tight">List Property</h1>
-            <p className="text-gray-500 font-medium mt-2">Drop a pin and add details to go live instantly.</p>
+            <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">List Property</h1>
+            <p className="text-gray-500 font-medium mt-2 text-sm sm:text-base">Drop a pin and add details to go live instantly.</p>
           </div>
-          <button onClick={() => router.push("/")} className="text-gray-400 hover:text-black transition-colors font-bold text-sm bg-white/50 px-4 py-2 rounded-xl border border-gray-100">
+          <button onClick={() => router.push("/")} className="hidden sm:block text-gray-400 hover:text-black transition-colors font-bold text-sm bg-white/50 px-4 py-2 rounded-xl border border-gray-100">
             ✕ Cancel
           </button>
         </div>
@@ -171,7 +199,8 @@ export default function AddProperty() {
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Property Title</label>
             <input
-              placeholder="e.g., Luxury 3BHK Villa in Mohali"
+              value={form.title}
+              placeholder="e.g., Luxury 3BHK Villa"
               className="w-full bg-white/50 backdrop-blur-sm border border-gray-200/60 p-4 rounded-2xl focus:bg-white focus:ring-2 focus:ring-black focus:outline-none transition-all shadow-sm placeholder-gray-400 font-medium text-gray-800"
               onChange={(e) => setForm({ ...form, title: e.target.value })}
             />
@@ -183,6 +212,7 @@ export default function AddProperty() {
               <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Price (₹)</label>
               <input
                 type="number"
+                value={form.price}
                 placeholder="15000000"
                 className="w-full bg-white/50 backdrop-blur-sm border border-gray-200/60 p-4 rounded-2xl focus:bg-white focus:ring-2 focus:ring-black focus:outline-none transition-all shadow-sm font-bold text-gray-800"
                 onChange={(e) => setForm({ ...form, price: e.target.value })}
@@ -197,6 +227,7 @@ export default function AddProperty() {
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Locality</label>
               <input
+                value={form.locality}
                 placeholder="e.g., Panchkula Extension-2"
                 className="w-full bg-white/50 backdrop-blur-sm border border-gray-200/60 p-4 rounded-2xl focus:bg-white focus:ring-2 focus:ring-black focus:outline-none transition-all shadow-sm font-medium text-gray-800"
                 onChange={(e) => setForm({ ...form, locality: e.target.value })}
@@ -212,6 +243,7 @@ export default function AddProperty() {
                 <span className="absolute left-4 top-[1.1rem] text-gray-500 font-bold">+91</span>
                 <input
                   type="tel"
+                  value={form.phone}
                   placeholder="9876543210"
                   className="w-full bg-white/50 backdrop-blur-sm border border-gray-200/60 p-4 pl-14 rounded-2xl focus:bg-white focus:ring-2 focus:ring-black focus:outline-none transition-all shadow-sm font-bold text-gray-800 tracking-wide"
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
@@ -235,8 +267,23 @@ export default function AddProperty() {
           <div className="pt-2">
             <div className="flex justify-between items-end mb-3 ml-1">
               <label className="block text-sm font-bold text-gray-700">Pin Exact Location</label>
-              <span className="text-xs font-semibold text-gray-400 bg-white/50 px-2 py-1 rounded-md">Click map to move pin</span>
+              <span className="text-xs font-semibold text-gray-400 bg-white/50 px-2 py-1 rounded-md hidden sm:block">Click map to move pin</span>
             </div>
+
+            {/* QUICK LOCATION BUTTONS (Scrollable on mobile) */}
+            <div className="flex overflow-x-auto gap-2 mb-4 pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {QUICK_LOCATIONS.map((loc) => (
+                <button
+                  key={loc.name}
+                  type="button"
+                  onClick={() => handleQuickLocation(loc)}
+                  className="whitespace-nowrap px-4 py-2 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-black hover:text-white hover:border-black transition-all duration-300 shadow-sm"
+                >
+                  📍 {loc.name}
+                </button>
+              ))}
+            </div>
+
             <div className="rounded-2xl overflow-hidden border-2 border-white shadow-[0_4px_20px_rgb(0,0,0,0.05)] relative bg-white/50 p-1">
               {isLoaded ? (
                 <div className="rounded-xl overflow-hidden">
@@ -245,6 +292,8 @@ export default function AddProperty() {
                     center={marker}
                     zoom={13}
                     options={{ disableDefaultUI: true, zoomControl: true }}
+                    onLoad={onLoad}
+                    onUnmount={onUnmount}
                     onClick={(e) =>
                       setMarker({
                         lat: e.latLng.lat(),
@@ -283,6 +332,9 @@ export default function AddProperty() {
               ) : (
                 "Post Property Live"
               )}
+            </button>
+            <button onClick={() => router.push("/")} className="w-full mt-4 sm:hidden text-gray-500 hover:text-black font-bold text-sm py-2">
+              Cancel and go back
             </button>
           </div>
         </div>
