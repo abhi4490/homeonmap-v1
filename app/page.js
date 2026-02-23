@@ -126,8 +126,12 @@ export default function HomePage() {
         {/* Right: Auth & Actions */}
         <div className="flex items-center gap-4">
           {user ? (
-            <div className="hidden sm:flex items-center gap-3 bg-white/60 pl-2 pr-4 py-1.5 rounded-full border border-gray-200 shadow-sm">
-              <img src={user.user_metadata?.avatar_url || "https://www.gravatar.com/avatar/?d=mp"} alt="Profile" className="w-8 h-8 rounded-full border border-gray-100" />
+            <div className="hidden sm:flex items-center gap-3 bg-white/60 pl-4 pr-4 py-1.5 rounded-full border border-gray-200 shadow-sm">
+              <Link href="/my-listings" className="text-xs font-extrabold text-gray-700 hover:text-black transition-colors uppercase tracking-wide">
+                My Portfolio
+              </Link>
+              <div className="w-px h-4 bg-gray-300 mx-1"></div>
+              <img src={user.user_metadata?.avatar_url || "https://www.gravatar.com/avatar/?d=mp"} alt="Profile" className="w-8 h-8 rounded-full border border-gray-100 shadow-sm" />
               <button onClick={handleLogout} className="text-xs font-bold text-gray-500 hover:text-red-500 transition-colors uppercase tracking-wide">
                 Logout
               </button>
