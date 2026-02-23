@@ -107,6 +107,11 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
+            {/* CONTACT LINK ADDED HERE */}
+            <Link href="/contact" className="hidden sm:block text-xs font-bold text-gray-500 hover:text-black transition-colors uppercase tracking-wide mr-2">
+              Contact
+            </Link>
+
             {user ? (
               <div className="flex items-center gap-2 sm:gap-3 bg-white/60 pl-3 pr-2 sm:pr-4 py-1.5 rounded-full border border-gray-200 shadow-sm">
                 <Link href="/my-listings" className="text-[10px] sm:text-xs font-extrabold text-gray-700 hover:text-black uppercase tracking-wide">
