@@ -11,15 +11,15 @@ const containerStyle = {
   borderRadius: "1rem",
 };
 
-// Default center (Chandigarh)
+// Default center
 const defaultCenter = { lat: 30.7333, lng: 76.7794 };
 
-// Quick Location Buttons Data (Coordinates updated to get you close, no text auto-fill)
+// Aligned Quick Location Buttons: Added Panchkula before Ext-2
 const QUICK_LOCATIONS = [
   { name: "Zirakpur", coords: { lat: 30.6425, lng: 76.8173 } },
   { name: "Panchkula", coords: { lat: 30.6942, lng: 76.8606 } },
+  { name: "Panchkula Ext-2", coords: { lat: 30.622143, lng: 76.938349 } },
   { name: "Mohali", coords: { lat: 30.7046, lng: 76.7179 } },
-  { name: "Panchkula Ext-2", coords: { lat: 30.6500, lng: 76.8500 } }, // Drops pin near Sunlit Urbana area
 ];
 
 export default function AddProperty() {
@@ -79,16 +79,14 @@ export default function AddProperty() {
 
   // SMART UX: Handle Quick Location Clicks (Pan Map & Drop Pin ONLY)
   const handleQuickLocation = (loc) => {
-    // 1. Drop the pin
     setMarker(loc.coords);
-    // 2. Pan map and zoom in closer so user can manually adjust
     if (mapRef.current) {
       mapRef.current.panTo(loc.coords);
       mapRef.current.setZoom(15);
     }
   };
 
-  // SMART PRICE UX: Calculates Lakhs and Crores dynamically
+  // SMART PRICE UX
   const getPriceHint = (val) => {
     if (!val || isNaN(val)) return null;
     const num = Number(val);
@@ -122,7 +120,7 @@ export default function AddProperty() {
       const { error: insertError } = await supabase.from("properties").insert({
         title: form.title,
         price: Number(form.price),
-        locality: form.locality, // Leaves this exactly as the user typed it
+        locality: form.locality,
         phone: form.phone,
         lat: marker.lat,
         lng: marker.lng,
@@ -217,7 +215,6 @@ export default function AddProperty() {
                 className="w-full bg-white/50 backdrop-blur-sm border border-gray-200/60 p-4 rounded-2xl focus:bg-white focus:ring-2 focus:ring-black focus:outline-none transition-all shadow-sm font-bold text-gray-800"
                 onChange={(e) => setForm({ ...form, price: e.target.value })}
               />
-              {/* SMART PRICE HINT */}
               {form.price && (
                 <div className="absolute right-4 top-[2.4rem] bg-black text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-md animate-fade-in pointer-events-none">
                   {getPriceHint(form.price)}
@@ -333,7 +330,7 @@ export default function AddProperty() {
                 "Post Property Live"
               )}
             </button>
-            <button onClick={() => router.push("/")} className="w-full mt-4 sm:hidden text-gray-500 hover:text-black font-bold text-sm py-2">
+            <button type="button" onClick={() => router.push("/")} className="w-full mt-4 sm:hidden text-gray-500 hover:text-black font-bold text-sm py-2">
               Cancel and go back
             </button>
           </div>
