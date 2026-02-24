@@ -14,12 +14,14 @@ const containerStyle = {
 // Default center
 const defaultCenter = { lat: 30.7333, lng: 76.7794 };
 
-// Aligned Quick Location Buttons
+// ADDED NEW CHANDIGARH AND KHARAR
 const QUICK_LOCATIONS = [
   { name: "Zirakpur", coords: { lat: 30.6425, lng: 76.8173 } },
   { name: "Panchkula", coords: { lat: 30.6942, lng: 76.8606 } },
   { name: "Panchkula Ext-2", coords: { lat: 30.622143, lng: 76.938349 } },
   { name: "Mohali", coords: { lat: 30.7046, lng: 76.7179 } },
+  { name: "New Chandigarh", coords: { lat: 30.7855, lng: 76.7289 } },
+  { name: "Kharar", coords: { lat: 30.7414, lng: 76.6412 } },
 ];
 
 export default function AddProperty() {
@@ -30,7 +32,7 @@ export default function AddProperty() {
   const [user, setUser] = useState(null);
   const [authChecking, setAuthChecking] = useState(true);
   
-  // Form states (Added 'role' with default 'owner')
+  // Form states
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [marker, setMarker] = useState(defaultCenter);
   const [form, setForm] = useState({
@@ -115,7 +117,6 @@ export default function AddProperty() {
         imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/property-images/${fileName}`;
       }
 
-      // Added role to the insert function
       const { error: insertError } = await supabase.from("properties").insert({
         title: form.title,
         price: Number(form.price),
@@ -191,7 +192,6 @@ export default function AddProperty() {
 
         <div className="space-y-6">
           
-          {/* ROLE SELECTOR: Owner vs Dealer */}
           <div className="flex bg-gray-100/50 p-1.5 rounded-2xl w-full sm:w-fit border border-gray-200/60 shadow-inner">
             <button
               type="button"
@@ -209,7 +209,6 @@ export default function AddProperty() {
             </button>
           </div>
 
-          {/* TITLE */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Property Title</label>
             <input
@@ -220,7 +219,6 @@ export default function AddProperty() {
             />
           </div>
 
-          {/* GRID FOR PRICE & LOCALITY */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="relative">
               <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Price (₹)</label>
@@ -248,7 +246,6 @@ export default function AddProperty() {
             </div>
           </div>
 
-          {/* PHONE & IMAGE */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">WhatsApp Number</label>
@@ -276,7 +273,6 @@ export default function AddProperty() {
             </div>
           </div>
 
-          {/* MAP */}
           <div className="pt-2">
             <div className="flex justify-between items-end mb-3 ml-1">
               <label className="block text-sm font-bold text-gray-700">Pin Exact Location</label>
@@ -333,7 +329,6 @@ export default function AddProperty() {
             </div>
           </div>
 
-          {/* SUBMIT BUTTON */}
           <div className="pt-4">
             <button
               onClick={handleSubmit}

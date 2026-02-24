@@ -14,12 +14,14 @@ const mapContainerStyle = {
 // Default center
 const defaultCenter = { lat: 30.7333, lng: 76.7794 };
 
-// GUARANTEED UPDATED LOCATIONS
+// ADDED NEW CHANDIGARH AND KHARAR
 const LOCATIONS = [
   { name: "Zirakpur", coords: { lat: 30.6425, lng: 76.8173 } },
   { name: "Panchkula", coords: { lat: 30.6942, lng: 76.8606 } },
   { name: "Panchkula Ext-2", coords: { lat: 30.622143, lng: 76.938349 } },
   { name: "Mohali", coords: { lat: 30.7046, lng: 76.7179 } },
+  { name: "New Chandigarh", coords: { lat: 30.7855, lng: 76.7289 } },
+  { name: "Kharar", coords: { lat: 30.7414, lng: 76.6412 } },
 ];
 
 export default function HomePage() {
@@ -190,7 +192,7 @@ export default function HomePage() {
         </GoogleMap>
       </div>
 
-      {/* DIRECT WHATSAPP FLOATING BUTTON (Standard WhatsApp Size) */}
+      {/* DIRECT WHATSAPP FLOATING BUTTON */}
       {!selected && (
         <a
           href="https://wa.me/918501000700?text=Hello%20HomeOnMap,%20I%20have%20an%20inquiry%20about%20partnerships%20or%20listings."
