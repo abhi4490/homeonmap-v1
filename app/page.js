@@ -14,7 +14,7 @@ const mapContainerStyle = {
 // Default center
 const defaultCenter = { lat: 30.7333, lng: 76.7794 };
 
-// ADDED NEW CHANDIGARH AND KHARAR
+// GUARANTEED UPDATED LOCATIONS
 const LOCATIONS = [
   { name: "Zirakpur", coords: { lat: 30.6425, lng: 76.8173 } },
   { name: "Panchkula", coords: { lat: 30.6942, lng: 76.8606 } },
@@ -159,7 +159,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* FULL SCREEN MAP */}
+      {/* FULL SCREEN MAP (Business Listings Enabled) */}
       <div className="absolute inset-0 w-full h-full z-0">
         <GoogleMap
           mapContainerStyle={mapContainerStyle}
@@ -168,10 +168,8 @@ export default function HomePage() {
           options={{ 
             disableDefaultUI: true, 
             zoomControl: true,
-            zoomControlOptions: { position: window.google?.maps?.ControlPosition?.RIGHT_CENTER },
-            styles: [
-              { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }
-            ]
+            zoomControlOptions: { position: window.google?.maps?.ControlPosition?.RIGHT_CENTER }
+            // 'styles' array removed to bring back all shops, hospitals, and POIs
           }}
           onLoad={onLoad}
           onUnmount={onUnmount}

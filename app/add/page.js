@@ -14,7 +14,7 @@ const containerStyle = {
 // Default center
 const defaultCenter = { lat: 30.7333, lng: 76.7794 };
 
-// ADDED NEW CHANDIGARH AND KHARAR
+// GUARANTEED UPDATED LOCATIONS
 const QUICK_LOCATIONS = [
   { name: "Zirakpur", coords: { lat: 30.6425, lng: 76.8173 } },
   { name: "Panchkula", coords: { lat: 30.6942, lng: 76.8606 } },
