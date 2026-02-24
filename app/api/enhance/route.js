@@ -12,8 +12,8 @@ export async function POST(req) {
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     
-    // यहाँ हमने मॉडल का नाम बदलकर सबसे स्टेबल 'gemini-pro' कर दिया है
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    // Google का लेटेस्ट 2026 मॉडल (gemini-2.0-flash)
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     const prompt = `You are an expert real estate copywriter in India. Enhance the following raw property description to make it sound highly professional, attractive, and engaging to buyers/renters. Keep it realistic, concise (max 3 short paragraphs), and highlight the best features. Do not use overly heavy words. Here is the draft: "${text}"`;
 
