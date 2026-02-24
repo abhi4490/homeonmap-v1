@@ -6,7 +6,11 @@ export async function POST(req) {
     const { text } = await req.json();
     if (!text) return NextResponse.json({ error: "No text provided" }, { status: 400 });
 
-    // Initialize Gemini AI
+    // चेक करें कि Vercel को API Key मिली या नहीं
+    if (!process.env.GEMINI_API_KEY) {
+      return NextResponse.json({ error: "Vercel पर API Key मिसिंग है!" }, { status: 500 });
+    }
+
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
@@ -18,6 +22,7 @@ export async function POST(req) {
     return NextResponse.json({ enhancedText });
   } catch (error) {
     console.error("AI Error:", error);
-    return NextResponse.json({ error: "Failed to enhance text" }, { status: 500 });
+    // यह लाइन असली एरर को वापस फ्रंटएंड पर भेजेगी
+    return NextResponse.json({ error: error.message || "Unknown AI Error" }, { status: 500 });
   }
 }

@@ -105,7 +105,7 @@ export default function AddProperty() {
       if (data.enhancedText) {
         setForm({ ...form, description: data.enhancedText });
       } else {
-        alert("Failed to enhance. Try again.");
+        alert("❌ Error: " + data.error); 
       }
     } catch (error) {
       console.error(error);
