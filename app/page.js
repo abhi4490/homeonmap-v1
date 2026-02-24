@@ -14,7 +14,7 @@ const mapContainerStyle = {
 // Default center
 const defaultCenter = { lat: 30.7333, lng: 76.7794 };
 
-// GUARANTEED UPDATED LOCATIONS
+// ALL 6 TRICITY LOCATIONS
 const LOCATIONS = [
   { name: "Zirakpur", coords: { lat: 30.6425, lng: 76.8173 } },
   { name: "Panchkula", coords: { lat: 30.6942, lng: 76.8606 } },
@@ -159,7 +159,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* FULL SCREEN MAP (Business Listings Enabled) */}
+      {/* FULL SCREEN MAP */}
       <div className="absolute inset-0 w-full h-full z-0">
         <GoogleMap
           mapContainerStyle={mapContainerStyle}
@@ -169,7 +169,7 @@ export default function HomePage() {
             disableDefaultUI: true, 
             zoomControl: true,
             zoomControlOptions: { position: window.google?.maps?.ControlPosition?.RIGHT_CENTER }
-            // 'styles' array removed to bring back all shops, hospitals, and POIs
+            // Business Listings are enabled here (no styles array)
           }}
           onLoad={onLoad}
           onUnmount={onUnmount}
@@ -253,6 +253,13 @@ export default function HomePage() {
                     {selected.role === 'dealer' ? '🏢 Dealer' : '👤 Owner'}
                   </div>
                 </div>
+
+                {/* AI ENHANCED DESCRIPTION DISPLAY */}
+                {selected.description && (
+                  <div className="mt-4 p-3.5 bg-gray-50/80 border border-gray-100 rounded-xl text-sm text-gray-600 font-medium max-h-24 overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full shadow-inner leading-relaxed">
+                    {selected.description}
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-2 sm:gap-3 mt-5 sm:mt-8">
