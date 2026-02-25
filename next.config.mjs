@@ -1,13 +1,4 @@
-/** @type {import('next').NextConfig} /
-const nextConfig = {
-async rewrites() {
-return [
-{
-source: '/supabase-proxy/:path',
-destination: ${process.env.NEXT_PUBLIC_SUPABASE_URL}/:path*,
-},
-];
-},
-};
+/** @type {import('next').NextConfig} */
+const nextConfig = {};
 
 export default nextConfig;
